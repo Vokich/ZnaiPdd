@@ -1,0 +1,71 @@
+{% extends 'base.html' %}
+
+{% block title %}Результаты тестирования для 16-18 лет{% endblock %}
+
+{% load static %}
+{% block content %}
+{% block extra_css %}{% endblock %}
+<link rel="stylesheet" type="text/css" href="{% static '../static/css/pdd_adult_success.css' %}">
+<div class="result-wrapper">
+    {% if result.passed %}
+        <span class="result-icon status-success">🏆</span>
+        <h1 class="result-title">Отлично!</h1>
+        <p class="result-message">
+            Поздравляем! Вы успешно сдали тест по ПДД для возрастов 16-18 лет и подтвердили свои знания правил дорожного движения.
+            Так держать!
+        </p>
+    {% else %}
+        <span class="result-icon status-failure">😥</span>
+        <h1 class="result-title">Попробуй еще раз</h1>
+        <p class="result-message">
+            К сожалению, вы не набрали достаточное количество баллов.<br>
+            Не расстраивайтесь, повторите правила и попробуйте снова!
+        </p>
+    {% endif %}
+
+    <div class="score-display">
+        <span class="score-number">{{ result.score }} / {{ result.total }}</span>
+        <span class="score-label">Правильных ответов</span>
+    </div>
+
+    <div class="score-display" style="margin-left: 10px;">
+        <span class="score-number">{{ result.passing_score }}</span>
+        <span class="score-label">Нужно для сдачи</span>
+    </div>
+
+    <div class="actions">
+        {% if not result.passed %}
+            <a href="{% url 'adults' %}" class="btn-action btn-primary">Пройти тест заново</a>
+        {% else %}
+            <a href="{% url 'index' %}" class="btn-action btn-primary">На главную</a>
+        {% endif %}
+    </div>
+    {% if result.passed %}
+<div class="certificate-section" style="margin-top: 30px; padding-top: 30px; border-top: 2px solid #eee;">
+    <h3 style="margin-bottom: 20px; color: #1A2C3E;">
+        {% if result.score >= 26 %}
+            🏅 Получите Диплом
+        {% else %}
+            📜 Получите Сертификат
+        {% endif %}
+    </h3>
+    <p style="color: #666; margin-bottom: 20px;">
+        {% if result.score >= 24 %}
+            Вы набрали <strong>{{ result.score }}</strong> баллов из {{ result.total }}!
+            Это отличный результат! Вы получаете <strong>Диплом</strong> об успешном прохождении теста.
+        {% elif result.score >= 18 %}
+            Вы набрали <strong>{{ result.score }}</strong> баллов из {{ result.total }}!
+            Вы получаете <strong>Сертификат</strong> об успешном прохождении теста.
+        {% endif %}
+    </p>
+    <a href="{% url 'generate_certificate' 'junior' %}" class="btn-action btn-primary" style="background: #2ECC71;">
+        {% if result.score >= 24 %}
+            Скачать Диплом
+        {% else %}
+            Скачать Сертификат
+        {% endif %}
+    </a>
+</div>
+{% endif %}
+</div>
+{% endblock %}

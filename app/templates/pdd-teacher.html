@@ -1,0 +1,126 @@
+{% extends 'base.html' %}
+
+{% load static %}
+{% block content %}
+{% block extra_css %}{% endblock %}
+<link rel="stylesheet" type="text/css" href="{% static '../static/css/pdd-teacher.css' %}">
+<div class="teacher-container">
+    <div class="hero-section">
+        <h2>📋 Отчёт о проведённом уроке ПДД</h2>
+        <p>
+            Уважаемые педагоги! После проведения урока по правилам дорожного движения,
+            пожалуйста, заполните форму отчёта. На основании предоставленной информации
+            вы сможете получить именную грамоту о проведении мероприятия.
+            Учтите, что проверка на действительность вашего урока может занять от 3 недель.
+            Грамота будет отправлена вам по почте
+        </p>
+    </div>
+    <div class="info-cards">
+        <div class="info-card">
+            <div class="emoji">📝</div>
+            <h4>Зачем нужен отчёт?</h4>
+            <p>Для фиксации проведённой работы и получения подтверждающего документа</p>
+        </div>
+        <div class="info-card">
+            <div class="emoji">🎓</div>
+            <h4>Что вы получите?</h4>
+            <p>Именную грамоту с вашими данными и информацией о проведённом уроке</p>
+        </div>
+        <div class="info-card">
+            <div class="emoji">📸</div>
+            <h4>Фотоотчёт</h4>
+            <p>Приложите ссылку на фотоальбом — это подтвердит проведение мероприятия</p>
+        </div>
+    </div>
+    <div class="form-section">
+        <h3>📝 Создать новый отчёт</h3>
+        <form method="POST" action="">
+            {% csrf_token %}
+
+            <div class="form-group">
+                <label for="{{ form.lesson_date.id_for_label }}">{{ form.lesson_date.label }}</label>
+                {{ form.lesson_date }}
+                {% if form.lesson_date.errors %}
+                    <small style="color: #dc3545;">{{ form.lesson_date.errors.0 }}</small>
+                {% endif %}
+            </div>
+
+            <div class="form-group">
+                <label for="{{ form.location.id_for_label }}">{{ form.location.label }}</label>
+                {{ form.location }}
+                <small style="color: #6c757d;">Пример: МБОУ СОШ №1, кабинет 204 или актовый зал</small>
+                {% if form.location.errors %}
+                    <small style="color: #dc3545;">{{ form.location.errors.0 }}</small>
+                {% endif %}
+            </div>
+
+            <div class="form-group">
+                <label for="{{ form.children_count.id_for_label }}">{{ form.children_count.label }}</label>
+                {{ form.children_count }}
+                {% if form.children_count.errors %}
+                    <small style="color: #dc3545;">{{ form.children_count.errors.0 }}</small>
+                {% endif %}
+            </div>
+
+            <div class="form-group">
+                <label for="{{ form.children_list.id_for_label }}">{{ form.children_list.label }}</label>
+                {{ form.children_list }}
+                <small style="color: #6c757d;">{{ form.children_list.help_text }}</small>
+                {% if form.children_list.errors %}
+                    <small style="color: #dc3545;">{{ form.children_list.errors.0 }}</small>
+                {% endif %}
+            </div>
+
+            <div class="form-group">
+                <label for="{{ form.photo_link.id_for_label }}">{{ form.photo_link.label }}</label>
+                {{ form.photo_link }}
+                <small style="color: #6c757d;">{{ form.photo_link.help_text }}</small>
+                {% if form.photo_link.errors %}
+                    <small style="color: #dc3545;">{{ form.photo_link.errors.0 }}</small>
+                {% endif %}
+            </div>
+
+            <button type="submit" class="btn btn-primary">Сохранить отчёт</button>
+        </form>
+    </div>
+    <div class="reports-section">
+        <h3>📋 Мои отчёты</h3>
+        {% if reports %}
+            <table class="reports-table">
+                <thead>
+                    <tr>
+                        <th>Дата урока</th>
+                        <th>Место проведения</th>
+                        <th>Кол-во детей</th>
+                        <th>Фотоотчёт</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for report in reports %}
+                    <tr>
+                        <td>{{ report.lesson_date|date:"d.m.Y" }}</td>
+                        <td>{{ report.location|truncatechars:30 }}</td>
+                        <td>{{ report.children_count }}</td>
+                        <td>
+                            {% if report.photo_link %}
+                                <a href="{{ report.photo_link }}" target="_blank" style="color: #1a73e8;">Ссылка</a>
+                            {% else %}
+                                —
+                            {% endif %}
+                        </td>
+                        <td>
+
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        {% else %}
+            <div class="empty-state">
+                <p>У вас пока нет созданных отчётов.</p>
+                <p>Заполните форму выше, чтобы создать первый отчёт и получить грамоту!</p>
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

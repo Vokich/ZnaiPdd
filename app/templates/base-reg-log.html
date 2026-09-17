@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>ПДД Академия</title>
+  <link href="https://fonts.googleapis.com/css2?family=Climate+Crisis:YEAR@1988&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  {% load static %}
+  {% block extra_css %}{% endblock %}
+  <link rel="stylesheet" type="text/css" href="{% static '../static/css/base-reg-log.css' %}">
+</head>
+<body>
+<div class="auth-layout">
+  <div class="auth-left">
+    <div class="brand">
+      <h1 class="brand-title">Знай ПДД</h1>
+      <img src="{% static 'images/reg-log-photo1.png' %}" alt="Знай ПДД">
+    </div>
+  </div>
+  <div class="auth-right">
+    <div class="top-nav">
+      <a href="{% url 'index' %}" class="home-link">На главную</a>
+    </div>
+    <div class="form-container">
+      {% block content %}{% endblock %}
+    </div>
+  </div>
+</div>
+</body>
+</html>

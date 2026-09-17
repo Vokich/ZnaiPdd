@@ -1,0 +1,91 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block content %}
+{% block extra_css %}{% endblock %}
+<link rel="stylesheet" type="text/css" href="{% static '../static/css/profile_edit.css' %}">
+<div class="edit-wrap">
+  <div class="edit-card">
+    <h2>Редактирование профиля</h2>
+    <p class="edit-subtitle">Измените свои данные и сохраните изменения</p>
+
+    <form method="post" novalidate>
+      {% csrf_token %}
+
+      {% if form.non_field_errors %}
+        <ul class="errorlist" style="margin-bottom:1.5rem;">
+          {% for error in form.non_field_errors %}<li>{{ error }}</li>{% endfor %}
+        </ul>
+      {% endif %}
+
+      <div class="form-grid">
+        <div class="form-group">
+          <label for="{{ form.username.id_for_label }}">{{ form.username.label }}</label>
+          {{ form.username }}
+          {% if form.username.errors %}<ul class="errorlist">{% for e in form.username.errors %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}
+        </div>
+
+        <div class="form-group">
+          <label for="{{ form.email.id_for_label }}">{{ form.email.label }}</label>
+          {{ form.email }}
+          {% if form.email.errors %}<ul class="errorlist">{% for e in form.email.errors %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}
+        </div>
+
+        <div class="form-group">
+          <label for="{{ form.surname1.id_for_label }}">{{ form.surname1.label }}</label>
+          {{ form.surname1 }}
+          {% if form.surname1.errors %}<ul class="errorlist">{% for e in form.surname1.errors %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}
+        </div>
+
+        <div class="form-group">
+          <label for="{{ form.name.id_for_label }}">{{ form.name.label }}</label>
+          {{ form.name }}
+          {% if form.name.errors %}<ul class="errorlist">{% for e in form.name.errors %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}
+        </div>
+
+        <div class="form-group">
+          <label for="{{ form.surname2.id_for_label }}">{{ form.surname2.label }}</label>
+          {{ form.surname2 }}
+          {% if form.surname2.errors %}<ul class="errorlist">{% for e in form.surname2.errors %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}
+        </div>
+
+        <div class="form-group">
+          <label for="{{ form.birth_date.id_for_label }}">{{ form.birth_date.label }}</label>
+          {{ form.birth_date }}
+          {% if form.birth_date.errors %}<ul class="errorlist">{% for e in form.birth_date.errors %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}
+        </div>
+
+        <div class="form-group full-width">
+          <label for="{{ form.school.id_for_label }}">{{ form.school.label }}</label>
+          {{ form.school }}
+          {% if form.school.errors %}<ul class="errorlist">{% for e in form.school.errors %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}
+        </div>
+
+        <div class="form-group full-width">
+          <label for="{{ form.region.id_for_label }}">{{ form.region.label }}</label>
+          {{ form.region }}
+          {% if form.region.errors %}<ul class="errorlist">{% for e in form.region.errors %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}
+        </div>
+
+        {% if profile.role == 'teacher' %}
+        <div class="form-group full-width">
+          <label for="{{ form.position.id_for_label }}">{{ form.position.label }}</label>
+          {{ form.position }}
+          {% if form.position.errors %}<ul class="errorlist">{% for e in form.position.errors %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}
+        </div>
+        {% endif %}
+
+        <div class="form-group full-width">
+          <label>Роль</label>
+          <div class="role-display">{{ profile.get_role_display }}</div>
+          <span class="role-hint">Роль изменить нельзя</span>
+        </div>
+      </div>
+
+      <div class="form-actions">
+        <button type="submit" class="btn-blue">Сохранить изменения</button>
+        <a href="{% url 'profile' %}" class="btn-outline-blue">Отмена</a>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,762 @@
+* {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Montserrat', sans-serif;
+      background-color: #ffffff;
+      color: #1A2C3E;
+      line-height: 1.4;
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+
+      font-size: 1.3rem;
+    }
+
+    .content {
+      flex: 1;
+    }
+
+    h1, h2, h3, h4, h5, .logo-head, .panel h4, .panel h3 {
+      font-family: 'Climate Crisis', sans-serif;
+      font-weight: 300;
+      font-optical-sizing: auto;
+      font-style: normal;
+      font-variation-settings: "YEAR" 1988;
+      letter-spacing: -0.02em;
+    }
+
+    .logo-head {
+      display: flex;
+      align-items: center;
+    }
+
+    .logo-head img {
+      height: 80px;
+      width: auto;
+    }
+
+    h3 {
+      font-size: 1.95rem;
+    }
+
+    h4 {
+      font-size: 1.82rem;
+    }
+
+    h5 {
+      font-size: 1.625rem;
+    }
+
+    a {
+      text-decoration: none;
+      transition: all 0.2s ease;
+    }
+
+    .header-div {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 1.95rem 5%;
+      max-width: 1820px;
+      margin: 0 auto;
+      width: 100%;
+      flex-wrap: wrap;
+      gap: 1.3rem;
+    }
+
+    .nav-menu {
+      display: flex;
+      align-items: center;
+      gap: 2.6rem;
+      flex-wrap: wrap;
+    }
+
+    .dropdown {
+      position: relative;
+      display: inline-block;
+    }
+
+    .dropbtn {
+      font-family: 'Montserrat', sans-serif;
+      font-weight: 600;
+      font-size: 1.3rem;
+      color: #1A2C3E;
+      border-bottom: 2px solid transparent;
+      padding-bottom: 5px;
+      cursor: pointer;
+      transition: 0.2s;
+      display: inline-block;
+    }
+
+    .dropbtn:hover {
+      border-bottom-color: #347fdc;
+      color: #347fdc;
+    }
+
+    .dropdown-content {
+      position: absolute;
+      top: calc(100% + 15px);
+      left: 0;
+      min-width: 286px;
+      background: white;
+      border-radius: 26px;
+      box-shadow: 0 26px 39px -15px rgba(0,0,0,0.15), 0 0 0 1px #e2edf7;
+      padding: 13px 0;
+      z-index: 100;
+      opacity: 0;
+      visibility: hidden;
+      transform: translateY(-8px);
+      transition: opacity 0.2s ease, visibility 0.2s ease, transform 0.2s ease;
+    }
+
+    .dropdown:hover .dropdown-content {
+      opacity: 1;
+      visibility: visible;
+      transform: translateY(0);
+    }
+
+    .dropdown-content a {
+      display: block;
+      padding: 13px 26px;
+      font-family: 'Montserrat', sans-serif;
+      font-size: 1.17rem;
+      font-weight: 500;
+      color: #2c4c7c;
+      text-decoration: none;
+      transition: 0.1s;
+      border-left: 3px solid transparent;
+    }
+
+    .dropdown-content a:hover {
+      background: #eef6fe;
+      padding-left: 31px;
+    }
+
+    .dropdown-content::before {
+      content: '';
+      position: absolute;
+      top: -9px;
+      left: 24px;
+      width: 0;
+      height: 0;
+      border-left: 9px solid transparent;
+      border-right: 9px solid transparent;
+      border-bottom: 9px solid white;
+      filter: drop-shadow(0 -1px 0 #e2edf7);
+    }
+
+    .panel h4, .panel h3 {
+      display: flex;
+      align-items: center;
+      gap: 2.34rem;
+      margin: 0;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+    }
+
+    .panel a, .panel span {
+      font-family: 'Montserrat', sans-serif;
+      font-weight: 600;
+      font-size: 1.3rem;
+    }
+
+    .login-a:hover {
+      color: #347fdc;
+    }
+
+    .panel h3 a {
+      display: inline-block;
+      padding: 10px 31px;
+      border: 3px solid #347fdc;
+      border-radius: 52px;
+      background: transparent;
+      color: #347fdc;
+      font-weight: 700;
+      transition: 0.2s;
+    }
+
+    .panel h3 a:hover {
+      background: #347fdc;
+      color: white;
+      border-color: #347fdc;
+    }
+
+    .panel span {
+      background: #eef6fe;
+      padding: 8px 23px;
+      border-radius: 52px;
+      font-weight: 600;
+      color: #1A2C3E;
+    }
+
+    .logout-a {
+      background: transparent;
+      border: 3px solid #d32f2f;
+      padding: 8px 23px;
+      border-radius: 52px;
+      color: #d32f2f;
+    }
+
+    .logout-a:hover {
+      background: #d32f2f;
+      color: #ffffff;
+    }
+
+    .index {
+      max-width: 1664px;
+      margin: 1.3rem auto 3.9rem;
+      padding: 0 31px;
+    }
+
+    .about {
+      font-size: 1.56rem;
+      background-color: #418be6;
+      border-radius: 62px;
+      padding: 1.56rem 2.6rem;
+      text-align: center;
+      color: #ffffff;
+      font-weight: 500;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.02);
+    }
+
+    .wrap h4 {
+      text-align: center;
+      margin-bottom: 2.6rem;
+      font-size: 2.34rem;
+    }
+
+    .blocks-flex {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 2.6rem;
+      justify-content: center;
+    }
+
+    .block-child, .block-teachers {
+      flex: 1;
+      min-width: 364px;
+      background: #eef6fe;
+      border-radius: 42px;
+      padding: 2.1rem 1.9rem;
+      transition: transform 0.2s, box-shadow 0.2s;
+      box-shadow: 0 10px 20px rgba(0,0,0,0.02);
+    }
+
+    .block-child:hover, .block-teachers:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 26px 39px rgba(0,0,0,0.05);
+    }
+
+    .block-child h5, .block-teachers h5 {
+      text-align: center;
+      font-size: 2.08rem;
+      margin-bottom: 1.3rem;
+      font-family: 'Climate Crisis', sans-serif;
+      letter-spacing: -0.01em;
+    }
+
+    .block-child p, .block-teachers p{
+      text-align: start;
+      margin-top: 1.3rem;
+      margin-left: 0.9rem;
+      margin-right: 0.9rem;
+      color: #2c4c7c;
+      font-weight: 500;
+      font-size: 1.3rem;
+      line-height: 1.5;
+    }
+
+    .flex-age {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 1.3rem;
+      margin-top: 1.95rem;
+    }
+
+    .age1, .age2, .age3 {
+      background: #347fdc;
+      color: white;
+      font-weight: 700;
+      font-size: 1.17rem;
+      padding: 0.65rem 1.56rem;
+      border-radius: 130px;
+      display: inline-block;
+      font-family: 'Montserrat', sans-serif;
+      letter-spacing: 0.3px;
+      transition: 0.1s;
+    }
+
+    footer {
+      background-color: #004f9f;
+      margin-top: 3.2rem;
+      padding: 2.6rem 5%;
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      align-items: center;
+      gap: 1.95rem;
+      color: white;
+      font-family: 'Montserrat', sans-serif;
+    }
+
+    .text-logo {
+      font-weight: 700;
+      font-size: 1.69rem;
+      letter-spacing: 1px;
+      font-family: 'Climate Crisis', sans-serif;
+    }
+
+    .social {
+      display: flex;
+      gap: 1.2rem;
+      align-items: center;
+    }
+
+    .social a {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 40px;
+      height: 40px;
+      border-radius: 10px;
+      transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+      text-decoration: none;
+      background-color: rgba(255, 255, 255, 0.15);
+      position: relative;
+    }
+
+    .social a img {
+      width: 44px;
+      height: 44px;
+      display: block;
+      transition: all 0.3s ease;
+    }
+
+    .social a:hover {
+      transform: translateY(-3px) scale(1.05);
+      background-color: rgba(255, 255, 255, 0.25);
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+    }
+
+    .social a:hover img {
+      transform: scale(1.1) rotate(-5deg);
+    }
+
+    .social a:first-child {
+      background-color: #4C75A3;
+    }
+
+    .social a:first-child:hover {
+      background-color: #3b5998;
+      box-shadow: 0 8px 20px rgba(76, 117, 163, 0.4);
+    }
+
+    .social a:last-child {
+      background-color: #4C75A3;
+    }
+
+    .social a:last-child:hover {
+      background-color: #3b5998;
+      box-shadow: 0 8px 20px rgba(76, 117, 163, 0.4);
+    }
+
+    @keyframes pulse {
+      0% {
+        box-shadow: 0 0 0 0 rgba(76, 117, 163, 0.4);
+      }
+      70% {
+        box-shadow: 0 0 0 10px rgba(76, 117, 163, 0);
+      }
+      100% {
+        box-shadow: 0 0 0 0 rgba(76, 117, 163, 0);
+      }
+    }
+
+    .social a:hover {
+      animation: pulse 1.2s ease-in-out;
+    }
+
+    /* ===== ТОЛЬКО ИСПРАВЛЕНИЯ ===== */
+    /* 1. Текст в about не вылезает из синего фона */
+    .about-container {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 40px;
+      max-width: 100%;
+      overflow: hidden;
+    }
+
+    .about-text {
+      flex: 1;
+      min-width: 0;
+      word-wrap: break-word;
+      overflow-wrap: break-word;
+    }
+
+    .about-text h1 {
+      font-size: 2.14rem;
+      margin: 0 0 12px 0;
+      text-align: start;
+      word-wrap: break-word;
+      overflow-wrap: break-word;
+    }
+
+    .about-text p {
+      font-size: 1.2rem;
+      line-height: 1.6;
+      margin: 0 0 15px 0;
+      text-align: left;
+      word-wrap: break-word;
+      overflow-wrap: break-word;
+    }
+
+    .about-image {
+      flex: 0 0 315px;
+      max-width: 100%;
+    }
+
+    .about-image img {
+      width: 100%;
+      height: 100%;
+      display: block;
+      border-radius: 10px;
+      max-width: 100%;
+    }
+
+    /* 2. Исправление social-link в футере */
+    .social-link {
+      display: inline-flex !important;
+      align-items: center;
+      justify-content: center;
+      width: 40px !important;
+      height: 40px !important;
+      border-radius: 10px;
+      transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+      text-decoration: none;
+      position: relative;
+      flex-shrink: 0;
+      background-color: #4C75A3 !important;
+    }
+
+    .social-link img {
+      width: 44px;
+      height: 44px;
+      display: block;
+      transition: all 0.3s ease;
+      max-width: 100%;
+      max-height: 100%;
+    }
+
+    .social-link .tooltip {
+      position: absolute;
+      bottom: -32px;
+      left: 50%;
+      transform: translateX(-50%) scale(0.8);
+      background: rgba(0, 0, 0, 0.8);
+      color: white;
+      padding: 4px 12px;
+      border-radius: 6px;
+      font-size: 0.75rem;
+      font-weight: 500;
+      white-space: nowrap;
+      opacity: 0;
+      pointer-events: none;
+      transition: all 0.3s ease;
+    }
+
+    .social-link:hover .tooltip {
+      opacity: 1;
+      transform: translateX(-50%) scale(1);
+      bottom: -35px;
+    }
+
+    .social-link:hover {
+      transform: translateY(-3px) scale(1.05);
+      background-color: #3b5998 !important;
+      box-shadow: 0 8px 20px rgba(76, 117, 163, 0.4);
+    }
+
+    .social-link:hover img {
+      transform: scale(1.1) rotate(-5deg);
+    }
+
+    @media (max-width: 768px) {
+      body {
+        font-size: 1.1rem;
+      }
+
+      .header-div {
+        padding: 1.2rem 4%;
+        gap: 0.8rem;
+      }
+
+      .logo-head img {
+        height: 60px;
+      }
+
+      .nav-menu {
+        gap: 0.8rem;
+        width: 100%;
+        justify-content: center;
+      }
+
+      .panel {
+        width: 100%;
+      }
+
+      .panel h4, .panel h3 {
+        justify-content: center;
+        gap: 0.8rem;
+        flex-wrap: wrap;
+      }
+
+      .dropdown {
+        position: relative;
+        width: auto;
+      }
+
+      .dropbtn {
+        font-size: 1.1rem;
+        padding: 10px 15px;
+        border-radius: 30px;
+        background: #f0f7ff;
+        border-bottom: none;
+      }
+
+      .dropbtn:hover {
+          border-bottom-color: transparent;
+      }
+
+      .dropdown-content {
+        position: absolute;
+        top: calc(100% + 10px);
+        left: 50%;
+        transform: translateX(-50%) translateY(-5px);
+        min-width: 240px;
+        width: max-content;
+        padding: 10px 0;
+        box-shadow: 0 20px 30px -10px rgba(0,0,0,0.2);
+        border-radius: 20px;
+        z-index: 1000;
+      }
+
+      .dropdown-content.active {
+        opacity: 1;
+        visibility: visible;
+        transform: translateX(-50%) translateY(0);
+      }
+
+      .dropdown-content::before {
+        display: none;
+      }
+
+      .dropdown-content a {
+        padding: 14px 24px;
+        font-size: 1.1rem;
+        border-left: none;
+        text-align: center;
+        white-space: nowrap;
+      }
+
+      .dropdown-content a:hover {
+          padding-left: 24px;
+          background: #eef6fe;
+      }
+
+      .panel span {
+        font-size: 1rem;
+        padding: 6px 16px;
+      }
+
+      .logout-a {
+        padding: 6px 18px;
+        font-size: 1rem !important;
+        border-width: 2px;
+      }
+
+      .panel h3 a {
+        padding: 8px 24px;
+        font-size: 1.1rem;
+        border-width: 2px;
+      }
+
+      .index {
+        padding: 0 16px;
+        margin: 0.8rem auto 2.6rem;
+      }
+
+      .about {
+        font-size: 1.1rem;
+        padding: 1.2rem 1.5rem;
+        border-radius: 32px;
+        margin-bottom: 2.6rem;
+        width: 100%;
+      }
+
+      .about-container {
+        flex-direction: column-reverse;
+        text-align: center;
+        gap: 20px;
+      }
+
+      .about-text h1 {
+        font-size: 1.6rem;
+        text-align: center;
+      }
+
+      .about-text p {
+        font-size: 1.05rem;
+        text-align: center;
+      }
+
+      .about-image {
+        flex: 0 0 auto;
+        width: 140px;
+        margin: 0 auto;
+      }
+
+      .wrap h4 {
+        font-size: 1.8rem;
+        margin-bottom: 1.8rem;
+      }
+
+      .blocks-flex {
+        gap: 1.5rem;
+        flex-direction: column;
+        align-items: center;
+      }
+
+      .block-child, .block-teachers {
+        min-width: 0;
+        width: 100%;
+        max-width: 400px;
+        padding: 1.5rem 1.2rem;
+        border-radius: 30px;
+      }
+
+      .photo-wrapper {
+        width: 100%;
+        max-width: 280px;
+        height: auto;
+        aspect-ratio: 4 / 3;
+        border-radius: 20px;
+        margin: 0 auto 12px;
+      }
+
+      .block-child h5, .block-teachers h5 {
+        font-size: 1.6rem;
+        margin-bottom: 0.8rem;
+      }
+
+      .block-child p, .block-teachers p {
+        font-size: 1.05rem;
+        margin: 0.8rem auto;
+        max-width: 100%;
+        text-align: center;
+      }
+
+      .flex-age {
+        gap: 0.8rem;
+      }
+
+      .age1, .age2, .age3 {
+        font-size: 1rem;
+        padding: 0.5rem 1.2rem;
+      }
+
+      footer {
+        flex-direction: column;
+        text-align: center;
+        padding: 2rem 5%;
+        gap: 1.5rem;
+        margin-top: 2rem;
+      }
+
+      .text-logo {
+        font-size: 1.4rem;
+      }
+
+      .social {
+        gap: 1rem;
+        justify-content: center;
+      }
+
+      .social-link {
+        width: 44px !important;
+        height: 44px !important;
+        border-radius: 12px;
+      }
+
+      .social-link img {
+        width: 32px;
+        height: 32px;
+      }
+
+      .social-link .tooltip {
+        bottom: -28px;
+        font-size: 0.7rem;
+        padding: 2px 10px;
+      }
+
+      .social-link:hover .tooltip {
+          bottom: -30px;
+      }
+    }
+     .profile-link {
+        background: #eef6fe;
+        padding: 8px 23px;
+        border-radius: 52px;
+        font-weight: 600;
+        color: #1A2C3E;
+        font-size: 1.3rem;
+        transition: 0.2s;
+     }
+     .profile-link:hover {
+       background: #347fdc;
+       color: #ffffff;
+     }
+
+    @media (max-width: 400px) {
+      .logo-head img {
+        height: 50px;
+      }
+
+      .dropbtn {
+        font-size: 1rem;
+        padding: 8px 12px;
+      }
+
+      .dropdown-content {
+        min-width: 180px;
+      }
+
+      .dropdown-content a {
+        font-size: 1rem;
+        padding: 12px 16px;
+        white-space: normal;
+      }
+
+      .block-child, .block-teachers {
+        padding: 1.2rem 0.8rem;
+      }
+
+      .block-child p, .block-teachers p {
+        font-size: 0.95rem;
+      }
+
+      .social-link {
+        width: 38px !important;
+        height: 38px !important;
+      }
+
+      .social-link img {
+        width: 28px;
+        height: 28px;
+      }
+    }

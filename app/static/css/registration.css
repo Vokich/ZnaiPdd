@@ -1,0 +1,319 @@
+    .auth-form {
+        display: flex;
+        flex-direction: column;
+        gap: 1.3rem;
+        max-height: 70vh;
+        overflow-y: auto;
+        padding-right: 10px;
+        scrollbar-width: thin;
+        scrollbar-color: #347fdc #e2edf7;
+    }
+
+    .auth-form::-webkit-scrollbar {
+        width: 8px;
+    }
+
+    .auth-form::-webkit-scrollbar-track {
+        background: #e2edf7;
+        border-radius: 10px;
+    }
+
+    .auth-form::-webkit-scrollbar-thumb {
+        background: #347fdc;
+        border-radius: 10px;
+        transition: background 0.3s;
+    }
+
+    .auth-form::-webkit-scrollbar-thumb:hover {
+        background: #1a5faa;
+    }
+
+    .form-group label {
+        font-family: 'Montserrat', sans-serif;
+        font-size: 0.91rem;
+        font-weight: 600;
+        color: #6c7f8f;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        display: block;
+        margin-bottom: 0.39rem;
+    }
+
+    .form-group input,
+    .form-group select {
+        width: 100%;
+        padding: 16px 18px;
+        font-family: 'Montserrat', sans-serif;
+        font-size: 1.17rem;
+        border: 1.5px solid #e2edf7;
+        border-radius: 18px;
+        background: #ffffff;
+        outline: none;
+        appearance: none;
+        transition: border-color 0.3s;
+    }
+
+    .form-group input:focus,
+    .form-group select:focus {
+        border-color: #347fdc;
+        box-shadow: 0 0 0 3px rgba(52, 127, 220, 0.15);
+    }
+
+    .field-error {
+        font-family: 'Montserrat', sans-serif;
+        font-size: 0.845rem;
+        color: #d32f2f;
+        margin-top: 0.26rem;
+    }
+
+    .form-error {
+        background: #fee8e8;
+        color: #d32f2f;
+        font-family: 'Montserrat', sans-serif;
+        font-size: 0.975rem;
+        padding: 10px 21px;
+        border-radius: 16px;
+    }
+
+    /* Стили для чекбокса */
+    .checkbox-group {
+        margin-top: 0.5rem;
+        padding: 12px 16px;
+        background: #f8f9fa;
+        border-radius: 16px;
+        border: 2px solid #e2edf7;
+        transition: border-color 0.3s, background 0.3s;
+    }
+
+    .checkbox-group.checked {
+        border-color: #347fdc;
+        background: #f0f7ff;
+    }
+
+    .checkbox-group.error {
+        border-color: #d32f2f;
+        background: #fff5f5;
+    }
+
+    .checkbox-label {
+        display: flex;
+        align-items: flex-start;
+        gap: 12px;
+        cursor: pointer;
+        font-family: 'Montserrat', sans-serif;
+        font-size: 0.95rem;
+        color: #333;
+        line-height: 1.5;
+        position: relative;
+        padding-left: 36px;
+        user-select: none;
+    }
+
+    .checkbox-label input[type="checkbox"] {
+        position: absolute;
+        opacity: 0;
+        width: 0;
+        height: 0;
+        padding: 0;
+        margin: 0;
+    }
+
+    .checkmark {
+        position: absolute;
+        left: 0;
+        top: 2px;
+        width: 24px;
+        height: 24px;
+        background: white;
+        border: 2px solid #ccc;
+        border-radius: 6px;
+        transition: all 0.3s;
+        flex-shrink: 0;
+    }
+
+    .checkbox-label:hover .checkmark {
+        border-color: #347fdc;
+    }
+
+    .checkbox-label input:checked ~ .checkmark {
+        background: #347fdc;
+        border-color: #347fdc;
+    }
+
+    .checkbox-label input:checked ~ .checkmark::after {
+        content: '';
+        position: absolute;
+        left: 8px;
+        top: 4px;
+        width: 6px;
+        height: 12px;
+        border: solid white;
+        border-width: 0 2px 2px 0;
+        transform: rotate(45deg);
+    }
+
+    .checkbox-group.error .checkmark {
+        border-color: #d32f2f;
+    }
+
+    .checkbox-text {
+        font-size: 0.95rem;
+        color: #444;
+        line-height: 1.5;
+    }
+
+    .policy-link {
+        color: #347fdc;
+        text-decoration: underline;
+        font-weight: 600;
+        transition: color 0.2s;
+    }
+
+    .policy-link:hover {
+        color: #1a5faa;
+    }
+
+    .btn-submit {
+        background: #347fdc;
+        color: white;
+        font-family: 'Montserrat', sans-serif;
+        font-weight: 700;
+        font-size: 1.3rem;
+        padding: 16px 31px;
+        border: none;
+        border-radius: 78px;
+        cursor: pointer;
+        margin-top: 0.65rem;
+        transition: background 0.2s, transform 0.1s, opacity 0.3s;
+    }
+
+    .btn-submit:hover:not(:disabled) {
+        background: #1a5faa;
+        transform: scale(1.01);
+    }
+
+    .btn-submit:active:not(:disabled) {
+        transform: scale(0.98);
+    }
+
+    .btn-submit:disabled {
+        background: #b0c4de;
+        cursor: not-allowed;
+        opacity: 0.7;
+    }
+
+    .auth-login-link {
+        text-align: center;
+        margin-top: 1.95rem;
+        font-family: 'Montserrat', sans-serif;
+        font-size: 1.105rem;
+        color: #6c7f8f;
+    }
+
+    .auth-login-link a {
+        color: #347fdc;
+        font-weight: 700;
+        text-decoration: none;
+        transition: color 0.2s;
+    }
+
+    .auth-login-link a:hover {
+        color: #1a5faa;
+        text-decoration: underline;
+    }
+
+    @media (max-width: 768px) {
+        .auth-form {
+            max-height: 60vh;
+            padding-right: 8px;
+            gap: 1rem;
+        }
+
+        .auth-form::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .form-group input,
+        .form-group select {
+            padding: 14px 16px;
+            font-size: 1.1rem;
+            border-radius: 16px;
+        }
+
+        .checkbox-label {
+            font-size: 0.9rem;
+            padding-left: 32px;
+            gap: 10px;
+        }
+
+        .checkmark {
+            width: 20px;
+            height: 20px;
+            top: 1px;
+        }
+
+        .checkbox-label input:checked ~ .checkmark::after {
+            left: 6px;
+            top: 3px;
+            width: 5px;
+            height: 10px;
+        }
+
+        .checkbox-text {
+            font-size: 0.88rem;
+        }
+
+        .checkbox-group {
+            padding: 10px 14px;
+        }
+
+        .btn-submit {
+            font-size: 1.2rem;
+            padding: 16px;
+            border-radius: 40px;
+        }
+    }
+
+    @media (max-width: 400px) {
+        .auth-form {
+            max-height: 55vh;
+            padding-right: 4px;
+        }
+
+        .auth-form::-webkit-scrollbar {
+            width: 4px;
+        }
+
+        .form-group input,
+        .form-group select {
+            padding: 12px 14px;
+            font-size: 1rem;
+        }
+
+        .checkbox-label {
+            font-size: 0.82rem;
+            padding-left: 28px;
+            gap: 8px;
+        }
+
+        .checkmark {
+            width: 18px;
+            height: 18px;
+            top: 1px;
+        }
+
+        .checkbox-label input:checked ~ .checkmark::after {
+            left: 5px;
+            top: 2px;
+            width: 5px;
+            height: 9px;
+        }
+
+        .checkbox-text {
+            font-size: 0.8rem;
+        }
+
+        .checkbox-group {
+            padding: 8px 12px;
+        }
+    }

@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+{% load static %}
+{% block content %}
+{% block extra_css %}{% endblock %}
+<link rel="stylesheet" type="text/css" href="{% static '../static/css/index.css' %}">
+<div class="index">
+  <div class="about">
+    <div class="about-container">
+      <div class="about-text">
+        <h1>Добро пожаловать на портал</br>
+          "Знай ПДД"</h1>
+        <p>«Знай ПДД» зажигает зелёный свет знаний: проходи тесты,
+          разбирай сложные ситуации и делай свои дороги ясными и безопасными</p>
+      </div>
+      <div class="about-image">
+        <img src="{% static 'images/description-foto.png' %}" alt="Академия ЮИД">
+      </div>
+    </div>
+  </div>
+  <div class="wrap">
+    <h4>Для кого этот сайт?</h4>
+    <div class="blocks-flex">
+      <div class="block-child">
+        <div class="photo-wrapper">
+          <img src="{% static 'images/child-foto.png' %}" alt="child">
+        </div>
+        <h5>Дети и подростки</h5>
+
+        <p>Дорога – это зона повышенной ответственности.
+          Хочешь чувствовать себя уверенно и безопасно на улице? У нас есть проверка знаний для каждого возраста!</p>
+      </div>
+      <div class="block-teachers">
+        <div class="photo-wrapper">
+          <img src="{% static 'images/teach-foto.png' %}" alt="teacher">
+        </div>
+        <h5>Педагоги</h5>
+        <p>Мы знаем, как непросто сделать уроки по ПДД интересными и эффективными.</br>
+          Сайт "Знай ПДД" создан, чтобы помочь вам в этой важной миссии.</p>
+      </div>
+    </div>
+  </div>
+
+</div>
+{% endblock %}

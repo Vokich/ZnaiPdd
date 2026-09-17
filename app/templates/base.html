@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>ПДД Академия | Безопасность дорожного движения</title>
+  <link href="https://fonts.googleapis.com/css2?family=Climate+Crisis:YEAR@1988&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  {% load static %}  
+  {% block extra_css %}{% endblock %}
+  <link rel="stylesheet" type="text/css" href="{% static '../static/css/base.css' %}">
+</head>
+<body>
+<div class='header-div'>
+  <div class="logo-head">
+    <a href="{% url 'index' %}">
+      <img src="{% static 'images/logo_pdd.png' %}" alt="Знай ПДД">
+    </a>
+  </div>
+  <div class="panel">
+    {% if user.is_authenticated %}
+    <div class="nav-menu">
+        {% if user.profile.role == 'teacher' %}
+        <div class="dropdown">
+            <div class="dropbtn">ПДД для педагогов</div>
+            <div class="dropdown-content">
+                <a href="{% url 'download_training' %}">Обучение</a>
+                <a href="{% url 'pdd-teacher' %}">Итоги обучения</a>
+            </div>
+        </div>
+        {% endif %}
+
+        {% if user.profile.role == 'child' %}
+        <div class="dropdown">
+            <div class="dropbtn">ПДД для детей</div>
+            <div class="dropdown-content">
+                <a href="{% url 'child' %}">8-12</a>
+                <a href="{% url 'teen' %}">12-15</a>
+                <a href="{% url 'adults' %}">16-18</a>
+            </div>
+        </div>
+        {% endif %}
+
+        <a href="{% url 'profile' %}" class="profile-link">{{ user.username }}</a>
+        <a class="logout-a" href="{% url 'logout' %}">
+            <h3 style="font-family: 'Montserrat', sans-serif; font-size: 1.3rem; font-weight: 700;">Выйти</h3>
+        </a>
+    </div>
+    {% else %}
+    <h3>
+        <a class="login-a" href="{% url 'login' %}">Войти</a>
+    </h3>
+    {% endif %}
+  </div>
+</div>
+
+<div class="content">
+  {% block content %}{% endblock %}
+</div>
+
+<footer>
+  <div class="text-logo">Знай ПДД</div>
+  <div class="social">
+    <a href="https://vk.ru/media_uid_lo" class="social-link" title="Медиа-центр">
+      <img src="{% static 'images/vk-icon.png' %}" alt="VK">
+      <span class="tooltip">Медиа ЮИД</span>
+    </a>
+    <a href="https://vk.ru/lab48" class="social-link" title="Лаборатория 48">
+      <img src="{% static 'images/vk-icon.png' %}" alt="VK">
+      <span class="tooltip">Лаборатория 48</span>
+    </a>
+  </div>
+</footer>
+</body>
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    const dropdowns = document.querySelectorAll('.dropdown');
+    dropdowns.forEach(dropdown => {
+      const btn = dropdown.querySelector('.dropbtn');
+      const content = dropdown.querySelector('.dropdown-content');
+
+      if (btn && content) {
+        btn.addEventListener('click', function(e) {
+          e.preventDefault();
+          dropdowns.forEach(d => {
+            if (d !== dropdown) {
+              d.querySelector('.dropdown-content')?.classList.remove('active');
+            }
+          });
+          content.classList.toggle('active');
+        });
+
+        document.addEventListener('click', function(e) {
+          if (!dropdown.contains(e.target)) {
+            content.classList.remove('active');
+          }
+        });
+      }
+    });
+  });
+</script>
+</html>

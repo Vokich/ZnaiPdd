@@ -1,0 +1,94 @@
+.about-container {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 40px;
+}
+
+.about{
+    width: 80%;
+    margin: 0 auto;
+    margin-bottom: 3.9rem;
+    padding-bottom: 0px;
+}
+
+.about-text {
+  flex: 1;
+}
+
+.about-text h1 {
+  font-size: 2.14rem;
+  margin: 0 0 12px 0;
+  text-align: start
+}
+
+.about-text p {
+  font-size: 1.2rem;
+  line-height: 1.6;
+  margin: 0 0 15px 0;
+  text-align: left;
+}
+
+.yuid-label {
+  display: inline-block;
+  font-weight: bold;
+  padding: 5px 20px;
+  border-radius: 20px;
+  font-size: 14px;
+}
+
+.about-image {
+  flex: 0 0 315px;
+}
+
+.about-image img {
+  width: 100%;
+  height: 100%;
+  display: block;
+  border-radius: 10px;
+}
+
+.photo-wrapper {
+  width: 400px;
+  height: 300px;
+  border-radius: 10%;
+  overflow: hidden;
+  margin: 0 auto 12px;
+}
+
+.photo-wrapper img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.block-child p,
+.block-teachers p {
+  text-align: left;
+  margin-top: 1.1rem;
+  margin-left: 0.5rem;
+  margin-right: 0.5rem;
+  color: #1A2C3E;
+  font-weight: 500;
+  font-size: 1.3rem;
+  line-height: 1.65;
+  letter-spacing: 0.02em;
+  hyphens: auto;
+  word-break: break-word;
+  max-width: 95%;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+@media (max-width: 768px) {
+  .about-container {
+    flex-direction: column;
+    text-align: center;
+  }
+
+  .about-image {
+    flex: 0 0 auto;
+    width: 180px;
+  }
+}

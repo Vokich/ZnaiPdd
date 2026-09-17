@@ -1,0 +1,81 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}Тест ПДД для 16–18 лет{% endblock %}
+{% block extra_css %}
+<link rel="stylesheet" type="text/css" href="{% static '../static/css/adult.css' %}">
+{% endblock %}
+{% block content %}
+<div class="pdd-wrapper">
+    <div class="test-header-card">
+        <h1>Тест по ПДД 16-18 лет</h1>
+        <div class="student-meta">
+            👤 {{ user.get_full_name|default:"Ученик" }}
+            {% if user.profile.school %}
+                | 🏫 {{ user.profile.school }}
+            {% endif %}
+        </div>
+        <p style="margin-top: 15px; opacity: 0.9;">
+            Вопросов: 30 | За прохождение теста от 60% до 80% правильных ответов вы получаете сертификат.</br> Больше 80% вы получаете диплом.
+        </p>
+    </div>
+
+    <div class="progress-container">
+        <div class="progress-bar" id="progressBar"></div>
+    </div>
+    <form method="post" id="pddForm">
+        {% csrf_token %}
+
+        {% for field in form %}
+            <div class="question-card">
+                <div class="question-text">{{ forloop.counter }}. {{ field.label }}</div>
+                <div class="options-grid">
+                    {% for choice in field %}
+                        <label class="option-label">
+                            {{ choice.tag }}
+                            <span>
+                                {% if forloop.counter == 1 %}А.{% elif forloop.counter == 2 %}Б.{% else %}В.{% endif %}
+                                {{ choice.choice_label }}
+                            </span>
+                        </label>
+                    {% endfor %}
+                </div>
+
+                {% if field.errors %}
+                    <ul class="errorlist">{{ field.errors }}</ul>
+                {% endif %}
+            </div>
+        {% endfor %}
+        <button type="submit" class="btn-finish">Завершить тест</button>
+    </form>
+</div>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+        const form = document.getElementById('pddForm');
+        const progressBar = document.getElementById('progressBar');
+        const totalQuestions = {{ form.fields|length }};
+
+        const labels = document.querySelectorAll('.option-label');
+
+        labels.forEach(label => {
+            label.addEventListener('click', function() {
+                const card = this.closest('.question-card');
+                card.querySelectorAll('.option-label').forEach(l => l.classList.remove('selected'));
+                this.classList.add('selected');
+                updateProgress();
+            });
+        });
+
+        function updateProgress() {
+            const answered = new Set();
+            const inputs = form.querySelectorAll('input[type="radio"]:checked');
+            inputs.forEach(input => answered.add(input.name));
+
+            const count = answered.size;
+            const percent = (count / totalQuestions) * 100;
+
+            progressBar.style.width = percent + '%';
+        }
+    });
+</script>
+{% endblock %}

@@ -1,0 +1,178 @@
+{% extends 'base-reg-log.html' %}
+{% load static %}
+{% block content %}
+{% block extra_css %}{% endblock %}
+<link rel="stylesheet" type="text/css" href="{% static '../static/css/registration.css' %}">
+<form method="post" class="auth-form" id="registration-form">
+    {% csrf_token %}
+
+    <div class="form-group">
+        <label>Логин</label>
+        {{ form.username }}
+        {% if form.username.errors %}
+            <div class="field-error">{{ form.username.errors|striptags }}</div>
+        {% endif %}
+    </div>
+
+    <div class="form-group">
+        <label>Пароль</label>
+        {{ form.password }}
+        {% if form.password.errors %}
+            <div class="field-error">{{ form.password.errors|striptags }}</div>
+        {% endif %}
+    </div>
+
+    <div class="form-group">
+        <label>Фамилия</label>
+        {{ form.surname1 }}
+        {% if form.surname1.errors %}
+            <div class="field-error">{{ form.surname1.errors|striptags }}</div>
+        {% endif %}
+    </div>
+
+    <div class="form-group">
+        <label>Имя</label>
+        {{ form.name }}
+        {% if form.name.errors %}
+            <div class="field-error">{{ form.name.errors|striptags }}</div>
+        {% endif %}
+    </div>
+
+    <div class="form-group">
+        <label>Отчество</label>
+        {{ form.surname2 }}
+        {% if form.surname2.errors %}
+            <div class="field-error">{{ form.surname2.errors|striptags }}</div>
+        {% endif %}
+    </div>
+
+    <div class="form-group">
+        <label>Почта</label>
+        {{ form.email }}
+        {% if form.email.errors %}
+            <div class="field-error">{{ form.email.errors|striptags }}</div>
+        {% endif %}
+    </div>
+
+    <div class="form-group">
+        <label>Учебное заведение</label>
+        {{ form.school }}
+        {% if form.school.errors %}
+            <div class="field-error">{{ form.school.errors|striptags }}</div>
+        {% endif %}
+    </div>
+
+    <div class="form-group">
+        <label>Дата рождения</label>
+        {{ form.birth_date }}
+        {% if form.birth_date.errors %}
+            <div class="field-error">{{ form.birth_date.errors|striptags }}</div>
+        {% endif %}
+    </div>
+
+    <div class="form-group">
+        <label>Муниципалитет</label>
+        {{ form.region }}
+        {% if form.region.errors %}
+            <div class="field-error">{{ form.region.errors|striptags }}</div>
+        {% endif %}
+    </div>
+
+    <div class="form-group">
+        <label>Роль</label>
+        {{ form.role }}
+        {% if form.role.errors %}
+            <div class="field-error">{{ form.role.errors|striptags }}</div>
+        {% endif %}
+    </div>
+
+    <div class="form-group" id="position-group" style="display: none;">
+        <label>Должность</label>
+        {{ form.position }}
+        {% if form.position.errors %}
+            <div class="field-error">{{ form.position.errors|striptags }}</div>
+        {% endif %}
+    </div>
+
+    <div class="form-group checkbox-group">
+        <label class="checkbox-label">
+            <input type="checkbox" id="agree-checkbox" required>
+            <span class="checkmark"></span>
+            <span class="checkbox-text">
+                Я согласен(сна) на
+                <a href="{% url 'privacy_policy' %}" target="_blank" class="policy-link">обработку персональных данных</a>
+            </span>
+        </label>
+        <div id="agree-error" class="field-error" style="display: none;">
+            Необходимо согласие на обработку персональных данных
+        </div>
+    </div>
+
+    {% if form.non_field_errors %}
+        <div class="form-error">{{ form.non_field_errors }}</div>
+    {% endif %}
+
+    <button type="submit" class="btn-submit" id="submit-btn" disabled>Зарегистрироваться</button>
+</form>
+
+<div class="auth-login-link">
+    Уже есть аккаунт? <a href="{% url 'login' %}">Войти</a>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        var roleSelect = document.getElementById('id_role');
+        var positionGroup = document.getElementById('position-group');
+        var positionInput = document.getElementById('id_position');
+
+        function togglePosition() {
+            if (roleSelect && positionGroup) {
+                if (roleSelect.value === 'teacher') {
+                    positionGroup.style.display = 'block';
+                    if (positionInput) positionInput.required = true;
+                } else {
+                    positionGroup.style.display = 'none';
+                    if (positionInput) {
+                        positionInput.required = false;
+                        positionInput.value = '';
+                    }
+                }
+            }
+        }
+
+        if (roleSelect) {
+            togglePosition();
+            roleSelect.addEventListener('change', togglePosition);
+        }
+        var agreeCheckbox = document.getElementById('agree-checkbox');
+        var submitBtn = document.getElementById('submit-btn');
+        var agreeError = document.getElementById('agree-error');
+        var checkboxGroup = document.querySelector('.checkbox-group');
+
+        function validateCheckbox() {
+            if (agreeCheckbox.checked) {
+                submitBtn.disabled = false;
+                agreeError.style.display = 'none';
+                checkboxGroup.classList.remove('error');
+                checkboxGroup.classList.add('checked');
+            } else {
+                submitBtn.disabled = true;
+                agreeError.style.display = 'block';
+                checkboxGroup.classList.add('error');
+                checkboxGroup.classList.remove('checked');
+            }
+        }
+
+        agreeCheckbox.addEventListener('change', validateCheckbox);
+        validateCheckbox();
+        document.getElementById('registration-form').addEventListener('submit', function(e) {
+            if (!agreeCheckbox.checked) {
+                e.preventDefault();
+                agreeError.style.display = 'block';
+                checkboxGroup.classList.add('error');
+                agreeCheckbox.focus();
+            }
+        });
+    });
+</script>
+{% endblock %}
