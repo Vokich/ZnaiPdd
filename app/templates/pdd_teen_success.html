@@ -43,7 +43,7 @@
     {% if result.passed %}
 <div class="certificate-section" style="margin-top: 30px; padding-top: 30px; border-top: 2px solid #eee;">
     <h3 style="margin-bottom: 20px; color: #1A2C3E;">
-        {% if result.score >= 26 %}
+        {% if result.score >= 24 %}
             🏅 Получите Диплом
         {% else %}
             📜 Получите Сертификат
@@ -58,7 +58,7 @@
             Вы получаете <strong>Сертификат</strong> об успешном прохождении теста.
         {% endif %}
     </p>
-    <a href="{% url 'generate_certificate' 'junior' %}" class="btn-action btn-primary" style="background: #2ECC71;">
+    <a href="{% url 'generate_certificate' 'teen' %}" class="btn-action btn-primary" style="background: #2ECC71;">
         {% if result.score >= 24 %}
             Скачать Диплом
         {% else %}
