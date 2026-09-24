@@ -31,6 +31,8 @@ from .forms import (
 from .models import TestResult, TeacherLessonReport, Certificate
 from .certificate_generator import CertificateGenerator
 
+def get_profile(user):
+    return getattr(user, 'profile', None)
 
 def is_child(user):
   return user.is_authenticated and hasattr(user, 'profile') and user.profile.role == 'child'
@@ -38,7 +40,6 @@ def is_child(user):
 
 def is_teacher(user):
   return user.is_authenticated and hasattr(user, 'profile') and user.profile.role == 'teacher'
-
 
 def index(request):
   return render(request, 'index.html')
@@ -338,34 +339,38 @@ def privacy_policy(request):
 
 @login_required
 def profile_view(request):
-  profile = request.user.profile
-  test_results = TestResult.objects.filter(user=request.user).order_by('-completed_at')[:5]
-  reports_count = TeacherLessonReport.objects.filter(user=request.user).count() if profile.role == 'teacher' else 0
+    profile = get_profile(request.user)
+    if profile is None:
+        return redirect('index')
 
-  context = {
-    'profile': profile,
-    'test_results': test_results,
-    'reports_count': reports_count,
-  }
-  return render(request, 'profile.html', context)
+    test_results = TestResult.objects.filter(user=request.user).order_by('-completed_at')[:5]
+    reports_count = TeacherLessonReport.objects.filter(user=request.user).count() if profile.role == 'teacher' else 0
+
+    context = {
+        'profile': profile,
+        'test_results': test_results,
+        'reports_count': reports_count,
+    }
+    return render(request, 'profile.html', context)
 
 
 @login_required
 def profile_edit(request):
-  profile = request.user.profile
+    profile = get_profile(request.user)
+    if profile is None:
+        return redirect('index')
 
-  if request.method == 'POST':
-    form = UserProfileForm(request.POST, instance=request.user, profile_instance=profile)
-    if form.is_valid():
-      form.save()
-      messages.success(request, 'Данные профиля успешно обновлены!')
-      return redirect('profile')
+    if request.method == 'POST':
+        form = UserProfileForm(request.POST, instance=request.user, profile_instance=profile)
+        if form.is_valid():
+            form.save()
+            return redirect('profile')
+        else:
+            messages.error(request, 'Пожалуйста, исправьте ошибки в форме.')
     else:
-      messages.error(request, 'Пожалуйста, исправьте ошибки в форме.')
-  else:
-    form = UserProfileForm(instance=request.user, profile_instance=profile)
+        form = UserProfileForm(instance=request.user, profile_instance=profile)
 
-  return render(request, 'profile_edit.html', {'form': form, 'profile': profile})
+    return render(request, 'profile_edit.html', {'form': form, 'profile': profile})
 
 
 @login_required

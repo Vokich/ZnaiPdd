@@ -1,6 +1,8 @@
 from django.db import models
 from django.contrib.auth.models import User
 from datetime import date
+from django.db.models.signals import post_save
+from django.dispatch import receiver
 
 class Profile(models.Model):
     class Role(models.TextChoices):
@@ -121,4 +123,17 @@ class Certificate(models.Model):
   def __str__(self):
     return f"{self.user.profile.full_name} - {self.get_test_type_display()}"
 
-
+@receiver(post_save, sender=User)
+def create_user_profile(sender, instance, created, **kwargs):
+    if created and not hasattr(instance, 'profile'):
+        Profile.objects.create(
+            user=instance,
+            role=Profile.Role.TEACHER,
+            surname1=instance.username,
+            name='—',
+            surname2='',
+            school='—',
+            birth_date='1990-01-01',
+            region='—',
+            position='',
+        )
