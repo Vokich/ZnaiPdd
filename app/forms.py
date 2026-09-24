@@ -97,26 +97,24 @@ class UserRegistrationForm(forms.ModelForm):
         return cleaned_data
 
     def save(self, commit=True):
-        user = User(
-            username=self.cleaned_data['username'],
-            email=self.cleaned_data['email']
-        )
-        user.set_password(self.cleaned_data['password'])
-
-        if commit:
-            user.save()
-            Profile.objects.create(
-                user=user,
-                role=self.cleaned_data['role'],
-                surname1=self.cleaned_data['surname1'],
-                name=self.cleaned_data['name'],
-                surname2=self.cleaned_data['surname2'],
-                school=self.cleaned_data['school'],
-                birth_date=self.cleaned_data['birth_date'],
-                region=self.cleaned_data['region'],
-                position=self.cleaned_data.get('position', '')
-            )
-        return user
+      user = User(
+          username=self.cleaned_data['username'],
+          email=self.cleaned_data['email']
+      )
+      user.set_password(self.cleaned_data['password'])
+      if commit:
+          user.save()
+          profile = user.profile
+          profile.role = self.cleaned_data['role']
+          profile.surname1 = self.cleaned_data['surname1']
+          profile.name = self.cleaned_data['name']
+          profile.surname2 = self.cleaned_data['surname2']
+          profile.school = self.cleaned_data['school']
+          profile.birth_date = self.cleaned_data['birth_date']
+          profile.region = self.cleaned_data['region']
+          profile.position = self.cleaned_data.get('position', '')
+          profile.save()
+      return user
 
 
 class LoginForm(forms.Form):
