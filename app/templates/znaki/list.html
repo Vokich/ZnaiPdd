@@ -1,0 +1,48 @@
+{% extends 'base.html' %}
+
+{% block title %}Все знаки ПДД{% endblock %}
+
+{% load static %}
+{% block content %}
+<link rel="stylesheet" type="text/css" href="{% static 'css/signs.css' %}">
+<div class="signs-list">
+
+    <h1>Все знаки ПДД</h1>
+
+    <div class="filters">
+        <a href="{% url 'signs_list' %}" class="{% if not current_category %}active{% endif %}">Все</a>
+        {% for value, label in categories %}
+            <a href="?category={{ value }}" class="{% if current_category == value %}active{% endif %}">{{ label }}</a>
+        {% endfor %}
+    </div>
+
+    <div class="signs-grid">
+        {% for sign in signs %}
+            <div class="sign-card {% if sign.id in unlocked_ids %}unlocked{% else %}locked{% endif %}">
+                {% if sign.id in unlocked_ids %}
+                    <a href="{% url 'sign_detail' sign.slug %}">
+                        <div class="sign-card-image">
+                            <img src="{{ sign.image.url }}" alt="{{ sign.name }}">
+                        </div>
+                        <h3>{{ sign.name }}</h3>
+                    </a>
+                    <span class="badge-unlocked">Открыт</span>
+                {% else %}
+                    <a href="{% url 'sign_detail' sign.slug %}">
+                        <div class="sign-card-image locked-image">
+                            <div class="lock-placeholder">
+                                <span class="lock-icon">?</span>
+                            </div>
+                        </div>
+                        <h3>Неизвестный знак</h3>
+                    </a>
+                    <span class="badge-locked">Закрыт</span>
+                {% endif %}
+            </div>
+        {% empty %}
+            <p>Знаков пока нет</p>
+        {% endfor %}
+    </div>
+
+</div>
+{% endblock %}

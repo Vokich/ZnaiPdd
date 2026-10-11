@@ -30,6 +30,9 @@ from .forms import (
 )
 from .models import TestResult, TeacherLessonReport, Certificate
 from .certificate_generator import CertificateGenerator
+from .models import RoadSign, UserSignProgress
+from django.shortcuts import get_object_or_404
+from django.utils import timezone
 
 def get_profile(user):
     return getattr(user, 'profile', None)
@@ -379,7 +382,7 @@ def profile_password_change(request):
     form = PasswordChangeForm(request.POST, user=request.user)
     if form.is_valid():
       user = form.save()
-      update_session_auth_hash(request, user)  # ← ЭТО ГЛАВНОЕ
+      update_session_auth_hash(request, user)  
       messages.success(request, 'Пароль успешно изменён!')
       return redirect('profile')
     else:
@@ -388,3 +391,67 @@ def profile_password_change(request):
     form = PasswordChangeForm(user=request.user)
 
   return render(request, 'profile_password.html', {'form': form})
+
+
+def signs_landing(request):
+    total = RoadSign.objects.count()
+    return render(request, 'znaki/landing.html', {'total': total})
+
+
+def signs_list(request):
+    category = request.GET.get('category', '')
+    signs = RoadSign.objects.all()
+    if category:
+        signs = signs.filter(category=category)
+
+    unlocked_ids = []
+    if request.user.is_authenticated:
+        unlocked_ids = list(
+            UserSignProgress.objects.filter(user=request.user, unlocked=True)
+            .values_list('sign_id', flat=True)
+        )
+
+    context = {
+        'signs': signs,
+        'categories': RoadSign.Category.choices,
+        'current_category': category,
+        'unlocked_ids': unlocked_ids,
+    }
+    return render(request, 'znaki/list.html', context)
+
+
+@login_required
+def sign_detail(request, slug):
+    sign = get_object_or_404(RoadSign, slug=slug)
+    progress, _ = UserSignProgress.objects.get_or_create(user=request.user, sign=sign)
+    return render(request, 'znaki/detail.html', {'sign': sign, 'progress': progress})
+
+
+@login_required
+def sign_test(request, slug):
+    sign = get_object_or_404(RoadSign, slug=slug)
+    progress, _ = UserSignProgress.objects.get_or_create(user=request.user, sign=sign)
+
+    if progress.unlocked:
+        return redirect('sign_detail', slug=slug)
+
+    error = None
+    if request.method == 'POST':
+        try:
+            answer = int(request.POST.get('answer', 0))
+        except (TypeError, ValueError):
+            answer = 0
+        if answer == sign.correct_answer:
+            progress.unlocked = True
+            progress.test_passed_at = timezone.now()
+            progress.save()
+            return redirect('sign_detail', slug=slug)
+        else:
+            error = 'Неверный ответ. Попробуйте ещё раз.'
+
+    context = {
+        'sign': sign,
+        'options': sign.answer_options,
+        'error': error,
+    }
+    return render(request, 'znaki/test.html', context)

@@ -8,6 +8,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   {% load static %}  
   <link rel="stylesheet" type="text/css" href="{% static '../static/css/base.css' %}">
+  <link rel="stylesheet" type="text/css" href="{% static '../static/css/signs.css' %}">
 </head>
 <body>
 <div class='header-div'>
@@ -19,6 +20,8 @@
   <div class="panel">
     {% if user.is_authenticated %}
     <div class="nav-menu">
+        <a href="{% url 'signs_landing' %}" class="signs-link">Знаки ПДД</a>
+
         {% if user.profile.role == 'teacher' %}
         <div class="dropdown">
             <div class="dropbtn">ПДД для педагогов</div>
@@ -41,14 +44,13 @@
         {% endif %}
 
         <a href="{% url 'profile' %}" class="profile-link">{{ user.username }}</a>
-        <a class="logout-a" href="{% url 'logout' %}">
-            <h3 style="font-family: 'Montserrat', sans-serif; font-size: 1.3rem; font-weight: 700;">Выйти</h3>
-        </a>
+        <a class="logout-a" href="{% url 'logout' %}">Выйти</a>
     </div>
     {% else %}
-    <h3>
+    <div class="nav-menu">
+        <a href="{% url 'signs_landing' %}" class="signs-link">Знаки ПДД</a>
         <a class="login-a" href="{% url 'login' %}">Войти</a>
-    </h3>
+    </div>
     {% endif %}
   </div>
 </div>

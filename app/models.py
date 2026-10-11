@@ -137,3 +137,46 @@ def create_user_profile(sender, instance, created, **kwargs):
             region='—',
             position='',
         )
+
+class RoadSign(models.Model):  # ЗнакиПДД. Пока не трогать 
+    class Category(models.TextChoices):
+        WARNING = 'warning', 'Предупреждающие'
+        PROHIBITING = 'prohibiting', 'Запрещающие'
+        MANDATORY = 'mandatory', 'Предписывающие'
+        INFO = 'info', 'Информационные'
+        SERVICE = 'service', 'Знаки сервиса'
+
+    name = models.CharField('Название', max_length=200)
+    slug = models.SlugField(unique=True)
+    category = models.CharField(max_length=20, choices=Category.choices)
+    image = models.ImageField('Изображение', upload_to='signs/')
+    short_description = models.TextField('Краткое описание')
+    full_description = models.TextField('Полное описание', blank=True)
+    fun_fact = models.TextField('Интересный факт', blank=True)
+    question = models.TextField('Вопрос для теста', blank=True)
+    answer_options = models.JSONField('Варианты ответов', default=list)
+    correct_answer = models.IntegerField('Номер правильного ответа', default=1)
+    order = models.IntegerField('Порядок', default=0)
+
+    class Meta:
+        ordering = ['order', 'name']
+        verbose_name = 'Знак ПДД'
+        verbose_name_plural = 'Знаки ПДД'
+
+    def __str__(self):
+        return self.name
+
+
+class UserSignProgress(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='sign_progress')
+    sign = models.ForeignKey(RoadSign, on_delete=models.CASCADE)
+    unlocked = models.BooleanField(default=False)
+    test_passed_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        unique_together = ['user', 'sign']
+        verbose_name = 'Прогресс по знаку'
+        verbose_name_plural = 'Прогресс по знакам'
+
+    def __str__(self):
+        return f'{self.user.username} — {self.sign.name}'

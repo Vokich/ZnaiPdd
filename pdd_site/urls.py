@@ -17,6 +17,8 @@ Including another URLconf
 from django.contrib import admin
 from django.urls import path
 from app import views
+from django.conf import settings
+from django.conf.urls.static import static
 
 urlpatterns = [
     path('admin/', admin.site.urls),
@@ -37,4 +39,11 @@ urlpatterns = [
     path('profile/', views.profile_view, name='profile'),
     path('profile/edit/', views.profile_edit, name='profile_edit'),
     path('profile/password/', views.profile_password_change, name='profile_password'),
+    path('signs/', views.signs_landing, name='signs_landing'),
+    path('signs/all/', views.signs_list, name='signs_list'),
+    path('signs/<slug:slug>/', views.sign_detail, name='sign_detail'),
+    path('signs/<slug:slug>/test/', views.sign_test, name='sign_test'),
 ]
+
+if settings.DEBUG:
+    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

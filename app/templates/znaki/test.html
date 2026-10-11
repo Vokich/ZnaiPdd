@@ -1,0 +1,41 @@
+{% extends 'base.html' %}
+
+{% block title %}Тест: {{ sign.name }}{% endblock %}
+
+{% load static %}
+{% block content %}
+{% block extra_css %}{% endblock %}
+<link rel="stylesheet" type="text/css" href="{% static '../static/css/signs.css' %}">
+<div class="sign-test">
+
+    <a href="{% url 'sign_detail' sign.slug %}">← Назад к знаку</a>
+
+    <h1>Мини-тест</h1>
+
+    <div class="test-image">
+        <img src="{{ sign.image.url }}" alt="{{ sign.name }}">
+    </div>
+
+    <form method="post">
+        {% csrf_token %}
+
+        <p class="question">{{ sign.question }}</p>
+
+        <div class="options">
+            {% for option in options %}
+                <label>
+                    <input type="radio" name="answer" value="{{ forloop.counter }}" required>
+                    <span>{{ option }}</span>
+                </label>
+            {% endfor %}
+        </div>
+
+        {% if error %}
+            <p class="error">{{ error }}</p>
+        {% endif %}
+
+        <button type="submit">Ответить</button>
+    </form>
+
+</div>
+{% endblock %}

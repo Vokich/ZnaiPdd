@@ -1,0 +1,30 @@
+{% extends 'base.html' %}
+
+{% block title %}Знаки ПДД{% endblock %}
+
+{% load static %}
+{% block content %}
+{% block extra_css %}{% endblock %}
+<link rel="stylesheet" type="text/css" href="{% static '../static/css/signs.css' %}">
+<div class="signs-landing">
+    <section class="hero">
+        <h1>Знаки ПДД</h1>
+        <p>Изучай дорожные знаки в игровой форме. Проходи мини-тесты и открывай новые знаки.</p>
+        <a href="{% url 'signs_list' %}" class="btn-primary">Ко всем знакам</a>
+    </section>
+
+    <section class="about">
+        <h2>Как это работает</h2>
+        <ol>
+            <li>Выбираешь знак из сетки</li>
+            <li>Проходишь мини-тест</li>
+            <li>Разблокируешь знак — видишь описание и интересный факт</li>
+        </ol>
+    </section>
+
+    <section class="stats">
+        <p>Всего знаков: <strong>{{ total }}</strong></p>
+    </section>
+
+</div>
+{% endblock %}

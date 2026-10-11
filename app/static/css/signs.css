@@ -1,0 +1,664 @@
+.signs-landing {
+  max-width: 900px;
+  margin: 40px auto;
+  padding: 0 20px;
+  color: #333;
+}
+
+.signs-landing .hero {
+  text-align: center;
+  padding: 60px 30px;
+  background: linear-gradient(135deg, #f5f9ff 0%, #e8f2ff 100%);
+  border-radius: 30px;
+  margin-bottom: 30px;
+  position: relative;
+  overflow: hidden;
+}
+
+.signs-landing .hero::before {
+  content: '';
+  position: absolute;
+  top: -50px;
+  right: -50px;
+  width: 200px;
+  height: 200px;
+  background: radial-gradient(circle, rgba(52, 127, 220, 0.1) 0%, transparent 70%);
+  border-radius: 50%;
+}
+
+.signs-landing .hero h1 {
+  font-size: 3rem;
+  color: #1A2C3E;
+  margin-bottom: 15px;
+  position: relative;
+}
+
+.signs-landing .hero p {
+  font-size: 1.2rem;
+  color: #555;
+  line-height: 1.6;
+  margin-bottom: 30px;
+  position: relative;
+  max-width: 600px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.signs-landing .about {
+  background: #ffffff;
+  padding: 35px 40px;
+  border-radius: 24px;
+  box-shadow: 0 10px 30px rgba(52, 127, 220, 0.08);
+  margin-bottom: 30px;
+  color: #333;
+  font-size: 1.1rem;
+  text-align: left;
+  border: 2px solid #eef6fe;
+  transition: border-color 0.3s, box-shadow 0.3s;
+}
+
+.signs-landing .about:hover {
+  border-color: #d4e6ff;
+  box-shadow: 0 15px 40px rgba(52, 127, 220, 0.12);
+}
+
+.signs-landing .about h2 {
+  color: #1A2C3E;
+  margin-bottom: 20px;
+  font-size: 1.7rem;
+  position: relative;
+  padding-left: 20px;
+}
+
+.signs-landing .about h2::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 6px;
+  height: 30px;
+  background: linear-gradient(180deg, #347fdc 0%, #2575fc 100%);
+  border-radius: 3px;
+}
+
+.signs-landing .about ol {
+  padding-left: 25px;
+  font-size: 1.15rem;
+  line-height: 2;
+  color: #444;
+}
+
+.signs-landing .about ol li {
+  padding-left: 10px;
+  margin-bottom: 8px;
+}
+
+.signs-landing .about ol li::marker {
+  color: #347fdc;
+  font-weight: 700;
+  font-size: 1.3rem;
+}
+
+.signs-landing .stats {
+  text-align: center;
+  font-size: 1.3rem;
+  color: #347fdc;
+  padding: 20px;
+  background: #f5f9ff;
+  border-radius: 20px;
+  font-weight: 500;
+}
+
+.signs-landing .stats strong {
+  font-size: 1.8rem;
+  color: #1a4cb0;
+  margin-left: 8px;
+}
+
+.btn-primary {
+  display: inline-block;
+  background: linear-gradient(135deg, #347fdc 0%, #2575fc 100%);
+  color: #ffffff;
+  font-weight: 700;
+  padding: 16px 38px;
+  border-radius: 40px;
+  font-size: 1.1rem;
+  box-shadow: 0 8px 20px rgba(52, 127, 220, 0.3);
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.btn-primary:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 12px 28px rgba(52, 127, 220, 0.4);
+}
+
+.signs-list {
+  max-width: 1200px;
+  margin: 40px auto;
+  padding: 0 20px;
+}
+
+.signs-list h1 {
+  font-size: 2.4rem;
+  color: #1A2C3E;
+  margin-bottom: 30px;
+  text-align: center;
+}
+
+.filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 40px;
+  justify-content: center;
+  padding: 20px;
+  background: #f5f9ff;
+  border-radius: 20px;
+}
+
+.filters a {
+  display: inline-block;
+  padding: 12px 24px;
+  background: #ffffff;
+  color: #347fdc;
+  border-radius: 30px;
+  font-weight: 600;
+  font-size: 0.95rem;
+  border: 2px solid transparent;
+  transition: all 0.25s;
+}
+
+.filters a:hover {
+  background: #347fdc;
+  color: #ffffff;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(52, 127, 220, 0.15);
+}
+
+.filters a.active {
+  background: linear-gradient(135deg, #347fdc 0%, #2575fc 100%);
+  color: #ffffff;
+  box-shadow: 0 6px 16px rgba(52, 127, 220, 0.3);
+}
+
+.signs-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 25px;
+}
+
+.sign-card {
+  background: #ffffff;
+  border-radius: 24px;
+  padding: 20px;
+  text-align: center;
+  box-shadow: 0 6px 20px rgba(26, 44, 62, 0.06);
+  transition: transform 0.3s, box-shadow 0.3s;
+  position: relative;
+  border: 2px solid #f0f6fe;
+  overflow: hidden;
+}
+
+.sign-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: linear-gradient(90deg, #347fdc 0%, #2575fc 100%);
+  opacity: 0;
+  transition: opacity 0.3s;
+}
+
+.sign-card.unlocked:hover {
+  transform: translateY(-8px);
+  box-shadow: 0 20px 40px rgba(52, 127, 220, 0.18);
+  border-color: #d4e6ff;
+}
+
+.sign-card.unlocked:hover::before {
+  opacity: 1;
+}
+
+.sign-card.locked {
+  background: #f8fafd;
+  border-color: #e8eef7;
+}
+
+.sign-card.locked:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 25px rgba(26, 44, 62, 0.08);
+}
+
+.sign-card-image {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 140px;
+  margin-bottom: 15px;
+  border-radius: 16px;
+  background: #fafcff;
+  overflow: hidden;
+  transition: background 0.3s;
+}
+
+.sign-card.unlocked:hover .sign-card-image {
+  background: #f0f7ff;
+}
+
+.sign-card-image img {
+  max-width: 90%;
+  max-height: 90%;
+  object-fit: contain;
+  transition: transform 0.3s;
+}
+
+.sign-card.unlocked:hover .sign-card-image img {
+  transform: scale(1.08);
+}
+
+.locked-image {
+  background: linear-gradient(135deg, #eef4fc 0%, #e2edfa 100%);
+  position: relative;
+}
+
+.lock-placeholder {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 70px;
+  height: 70px;
+  border-radius: 50%;
+  background: #ffffff;
+  box-shadow: 0 4px 12px rgba(52, 127, 220, 0.15);
+  position: relative;
+}
+
+.lock-placeholder::before {
+  content: '';
+  position: absolute;
+  inset: -8px;
+  border-radius: 50%;
+  border: 2px dashed #c8dcf5;
+  animation: rotate 20s linear infinite;
+}
+
+@keyframes rotate {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.lock-icon {
+  font-family: 'Climate Crisis', sans-serif;
+  font-size: 2.2rem;
+  color: #347fdc;
+  line-height: 1;
+  opacity: 0.7;
+}
+
+.sign-card h3 {
+  font-size: 1.05rem;
+  color: #1A2C3E;
+  margin-bottom: 12px;
+  line-height: 1.4;
+  min-height: 2.8em;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.sign-card.locked h3 {
+  color: #8a9cb3;
+  font-style: italic;
+}
+
+.sign-card a {
+  text-decoration: none;
+  color: inherit;
+  display: block;
+}
+
+.badge-unlocked,
+.badge-locked {
+  display: inline-block;
+  padding: 6px 16px;
+  border-radius: 20px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+}
+
+.badge-unlocked {
+  background: linear-gradient(135deg, #d4f4dd 0%, #b8ecd0 100%);
+  color: #1e8449;
+  box-shadow: 0 3px 10px rgba(30, 132, 73, 0.15);
+}
+
+.badge-locked {
+  background: #e8eef7;
+  color: #8a9cb3;
+}
+
+.sign-detail {
+  max-width: 800px;
+  margin: 40px auto;
+  padding: 0 20px;
+  color: #333;
+}
+
+.sign-detail > a {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: #347fdc;
+  font-weight: 600;
+  margin-bottom: 25px;
+  padding: 8px 16px;
+  border-radius: 30px;
+  transition: background 0.2s;
+}
+
+.sign-detail > a:hover {
+  background: #eef6fe;
+}
+
+.sign-detail h1 {
+  font-size: 2.4rem;
+  color: #1A2C3E;
+  margin-bottom: 30px;
+  text-align: center;
+}
+
+.sign-image {
+  text-align: center;
+  margin-bottom: 40px;
+  padding: 30px;
+  background: linear-gradient(135deg, #f5f9ff 0%, #eef6fe 100%);
+  border-radius: 24px;
+}
+
+.sign-image img {
+  max-width: 320px;
+  width: 100%;
+  height: auto;
+  border-radius: 20px;
+  box-shadow: 0 12px 30px rgba(26, 44, 62, 0.12);
+}
+
+.sign-image p {
+  margin-top: 20px;
+  color: #888;
+  font-style: italic;
+  font-size: 1.05rem;
+}
+
+.sign-info {
+  background: #ffffff;
+  padding: 35px;
+  border-radius: 24px;
+  box-shadow: 0 8px 24px rgba(26, 44, 62, 0.06);
+  border: 2px solid #f0f6fe;
+}
+
+.sign-info h2 {
+  font-size: 1.5rem;
+  color: #1A2C3E;
+  margin-top: 20px;
+  margin-bottom: 12px;
+  position: relative;
+  padding-left: 20px;
+}
+
+.sign-info h2:first-child {
+  margin-top: 0;
+}
+
+.sign-info h2::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 5px;
+  height: 24px;
+  background: linear-gradient(180deg, #347fdc 0%, #2575fc 100%);
+  border-radius: 3px;
+}
+
+.sign-info p {
+  font-size: 1.1rem;
+  line-height: 1.8;
+  color: #444;
+  margin-bottom: 10px;
+}
+
+.sign-locked {
+  text-align: center;
+  background: linear-gradient(135deg, #f5f9ff 0%, #eef6fe 100%);
+  padding: 40px 30px;
+  border-radius: 24px;
+  margin-top: 20px;
+  border: 2px dashed #c8dcf5;
+}
+
+.sign-locked p {
+  font-size: 1.15rem;
+  margin-bottom: 25px;
+  color: #555;
+}
+
+.sign-test {
+  max-width: 700px;
+  margin: 40px auto;
+  padding: 0 20px;
+  color: #333;
+}
+
+.sign-test > a {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: #347fdc;
+  font-weight: 600;
+  margin-bottom: 25px;
+  padding: 8px 16px;
+  border-radius: 30px;
+  transition: background 0.2s;
+}
+
+.sign-test > a:hover {
+  background: #eef6fe;
+}
+
+.sign-test h1 {
+  font-size: 2.2rem;
+  color: #1A2C3E;
+  margin-bottom: 30px;
+  text-align: center;
+}
+
+.test-image {
+  text-align: center;
+  margin-bottom: 40px;
+  padding: 25px;
+  background: linear-gradient(135deg, #f5f9ff 0%, #eef6fe 100%);
+  border-radius: 24px;
+}
+
+.test-image img {
+  max-width: 250px;
+  width: 100%;
+  height: auto;
+  border-radius: 20px;
+  box-shadow: 0 10px 25px rgba(26, 44, 62, 0.1);
+}
+
+.sign-test .question {
+  font-size: 1.3rem;
+  font-weight: 600;
+  color: #1A2C3E;
+  margin-bottom: 25px;
+  text-align: center;
+  padding: 20px;
+  background: #f8fafd;
+  border-radius: 16px;
+  border-left: 4px solid #347fdc;
+}
+
+.sign-test .options {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 30px;
+}
+
+.sign-test .options label {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 16px 20px;
+  background: #f8fafd;
+  border: 2px solid #e2edf7;
+  border-radius: 16px;
+  cursor: pointer;
+  transition: all 0.25s;
+}
+
+.sign-test .options label:hover {
+  border-color: #347fdc;
+  background: #f0f7ff;
+  transform: translateX(4px);
+  box-shadow: 0 4px 12px rgba(52, 127, 220, 0.1);
+}
+
+.sign-test .options label:has(input:checked) {
+  border-color: #347fdc;
+  background: linear-gradient(135deg, #eef6fe 0%, #e0edff 100%);
+  box-shadow: 0 6px 16px rgba(52, 127, 220, 0.15);
+}
+
+.sign-test .options input[type="radio"] {
+  accent-color: #347fdc;
+  width: 20px;
+  height: 20px;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.sign-test .options span {
+  font-size: 1.05rem;
+  color: #333;
+  line-height: 1.5;
+}
+
+.sign-test .error {
+  background: #fee8e8;
+  color: #d32f2f;
+  padding: 14px 24px;
+  border-radius: 14px;
+  margin-bottom: 20px;
+  font-weight: 600;
+  border-left: 4px solid #d32f2f;
+}
+
+.sign-test button[type="submit"] {
+  display: block;
+  width: 100%;
+  padding: 18px;
+  background: linear-gradient(135deg, #347fdc 0%, #2575fc 100%);
+  color: #ffffff;
+  border: none;
+  border-radius: 40px;
+  font-size: 1.15rem;
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: 0 8px 20px rgba(52, 127, 220, 0.3);
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.sign-test button[type="submit"]:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 12px 28px rgba(52, 127, 220, 0.4);
+}
+
+@media (max-width: 768px) {
+  .signs-landing .hero {
+    padding: 40px 20px;
+  }
+
+  .signs-landing .hero h1 { font-size: 2.2rem; }
+
+  .signs-landing .about {
+    padding: 25px 20px;
+  }
+
+  .signs-list h1,
+  .sign-detail h1,
+  .sign-test h1 { font-size: 1.8rem; }
+
+  .filters {
+    padding: 15px;
+    gap: 8px;
+  }
+
+  .filters a {
+    padding: 10px 18px;
+    font-size: 0.9rem;
+  }
+
+  .signs-grid {
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    gap: 15px;
+  }
+
+  .sign-card { padding: 15px; }
+  .sign-card h3 { font-size: 0.95rem; min-height: 2.5em; }
+
+  .sign-card-image { height: 110px; }
+
+  .lock-placeholder {
+    width: 55px;
+    height: 55px;
+  }
+
+  .lock-icon { font-size: 1.7rem; }
+
+  .sign-image { padding: 20px; }
+  .sign-image img { max-width: 240px; }
+
+  .sign-info { padding: 25px 20px; }
+
+  .test-image { padding: 20px; }
+  .test-image img { max-width: 200px; }
+
+  .sign-test .question { font-size: 1.1rem; }
+
+  .sign-test .options span { font-size: 0.95rem; }
+}
+
+@media (max-width: 400px) {
+  .signs-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+  }
+
+  .sign-card { padding: 12px; }
+  .sign-card h3 { font-size: 0.85rem; }
+
+  .sign-card-image { height: 90px; }
+
+  .lock-placeholder {
+    width: 45px;
+    height: 45px;
+  }
+
+  .lock-icon { font-size: 1.4rem; }
+
+  .sign-detail h1,
+  .sign-test h1 { font-size: 1.5rem; }
+
+  .signs-landing .hero h1 { font-size: 1.8rem; }
+}

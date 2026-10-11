@@ -1,0 +1,42 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ sign.name }}{% endblock %}
+
+{% load static %}
+{% block content %}
+{% block extra_css %}{% endblock %}
+<link rel="stylesheet" type="text/css" href="{% static '../static/css/signs.css' %}">
+<div class="sign-detail">
+
+    <a href="{% url 'signs_list' %}">← Ко всем знакам</a>
+
+    <h1>{{ sign.name }}</h1>
+
+    <div class="sign-image">
+        {% if progress.unlocked %}
+            <img src="{{ sign.image.url }}" alt="{{ sign.name }}">
+        {% else %}
+            <img src="{{ sign.image.url }}" alt="{{ sign.name }}" style="filter: blur(15px);">
+            <p>Знак заблокирован</p>
+        {% endif %}
+    </div>
+
+    {% if progress.unlocked %}
+        <div class="sign-info">
+            <h2>Описание</h2>
+            <p>{{ sign.full_description|default:sign.short_description }}</p>
+
+            {% if sign.fun_fact %}
+                <h2>Интересный факт</h2>
+                <p>{{ sign.fun_fact }}</p>
+            {% endif %}
+        </div>
+    {% else %}
+        <div class="sign-locked">
+            <p>Пройди мини-тест, чтобы разблокировать знак</p>
+            <a href="{% url 'sign_test' sign.slug %}" class="btn-primary">Пройти тест</a>
+        </div>
+    {% endif %}
+
+</div>
+{% endblock %}

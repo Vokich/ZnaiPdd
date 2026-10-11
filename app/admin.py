@@ -3,7 +3,7 @@ from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
 from django.contrib.auth.models import User
 from django.urls import reverse
 from django.utils.html import format_html
-from .models import Profile, TestResult, TeacherLessonReport, Certificate
+from .models import Profile, TestResult, TeacherLessonReport, Certificate, RoadSign, UserSignProgress
 
 
 class ProfileInline(admin.StackedInline):
@@ -98,3 +98,35 @@ class CertificateAdmin(admin.ModelAdmin):
 admin.site.site_header = 'Админ-панель «Знай ПДД»'
 admin.site.site_title = 'Знай ПДД'
 admin.site.index_title = 'Управление сайтом'
+
+@admin.register(RoadSign)
+class RoadSignAdmin(admin.ModelAdmin):
+    list_display = ('name', 'category', 'order', 'image_preview')
+    list_filter = ('category',)
+    search_fields = ('name',)
+    list_editable = ('order',)
+    fieldsets = (
+        ('Основное', {
+            'fields': ('name', 'slug', 'category', 'image', 'order')
+        }),
+        ('Описание', {
+            'fields': ('short_description', 'full_description', 'fun_fact')
+        }),
+        ('Тест', {
+            'fields': ('question', 'answer_options', 'correct_answer'),
+            'description': 'Варианты ответов — JSON-массив: ["Вариант 1", "Вариант 2", "Вариант 3"]'
+        }),
+    )
+
+    def image_preview(self, obj):
+        if obj.image:
+            return format_html('<img src="{}" style="max-height: 60px;" />', obj.image.url)
+        return '—'
+    image_preview.short_description = 'Превью'
+
+
+@admin.register(UserSignProgress)
+class UserSignProgressAdmin(admin.ModelAdmin):
+    list_display = ('user', 'sign', 'unlocked', 'test_passed_at')
+    list_filter = ('unlocked', 'sign')
+    search_fields = ('user__username', 'sign__name')
