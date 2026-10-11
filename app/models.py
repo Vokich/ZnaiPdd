@@ -6,7 +6,7 @@ from django.dispatch import receiver
 
 class Profile(models.Model):
     class Role(models.TextChoices):
-        CHILD = 'child', 'Ребенок'
+        CHILD = 'child', 'Школьник'
         TEACHER = 'teacher', 'Педагог'
 
     role = models.CharField(
