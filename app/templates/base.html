@@ -17,12 +17,11 @@
       <img src="{% static 'images/logo_pdd.png' %}" alt="Знай ПДД">
     </a>
   </div>
-  <div class="panel">
+    <div class="panel">
     {% if user.is_authenticated %}
     <div class="nav-menu">
-        <a href="{% url 'signs_landing' %}" class="signs-link">Знаки ПДД</a>
-
         {% if user.profile.role == 'teacher' %}
+        <a href="{% url 'signs_landing' %}" class="signs-link">Знаки ПДД</a>
         <div class="dropdown">
             <div class="dropbtn">ПДД для педагогов</div>
             <div class="dropdown-content">
@@ -33,6 +32,7 @@
         {% endif %}
 
         {% if user.profile.role == 'child' %}
+        <a href="{% url 'signs_landing' %}" class="signs-link">Знаки ПДД</a>
         <div class="dropdown">
             <div class="dropbtn">ПДД для детей</div>
             <div class="dropdown-content">
@@ -48,7 +48,6 @@
     </div>
     {% else %}
     <div class="nav-menu">
-        <a href="{% url 'signs_landing' %}" class="signs-link">Знаки ПДД</a>
         <a class="login-a" href="{% url 'login' %}">Войти</a>
     </div>
     {% endif %}

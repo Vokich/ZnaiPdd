@@ -1123,7 +1123,9 @@ class TeacherLessonReportForm(forms.ModelForm):
       model = TeacherLessonReport
       fields = ['lesson_date', 'location', 'children_count', 'children_list', 'photo_link']
       widgets = {
-        'lesson_date': forms.DateInput(attrs={'type': 'date', 'class': 'form-control'}),
+        'lesson_date': forms.DateInput(
+          format='%Y-%m-%d',
+          attrs={'type': 'date', 'class': 'form-control'}),
         'location': forms.TextInput(
           attrs={'class': 'form-control', 'placeholder': 'Например: МБОУ СОШ №1, кабинет 204'}),
         'children_count': forms.NumberInput(attrs={'class': 'form-control', 'min': 1}),
@@ -1201,7 +1203,9 @@ class UserProfileForm(forms.ModelForm):
   )
   birth_date = forms.DateField(
     label='Дата рождения',
-    widget=forms.DateInput(attrs={'type': 'date', 'class': 'form-control'}),
+    widget=forms.DateInput(
+      format='%Y-%m-%d',
+      attrs={'type': 'date', 'class': 'form-control'}),
   )
   region = forms.CharField(
     label='Муниципалитет',
@@ -1230,7 +1234,6 @@ class UserProfileForm(forms.ModelForm):
       self.fields['birth_date'].initial = self.profile_instance.birth_date
       self.fields['region'].initial = self.profile_instance.region
       self.fields['position'].initial = self.profile_instance.position
-      # Должность обязательна только для педагога
       if self.profile_instance.role != Profile.Role.TEACHER:
         self.fields['position'].required = False
 
