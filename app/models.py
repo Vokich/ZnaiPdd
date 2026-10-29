@@ -143,8 +143,12 @@ class RoadSign(models.Model):  # ЗнакиПДД. Пока не трогать
         WARNING = 'warning', 'Предупреждающие'
         PROHIBITING = 'prohibiting', 'Запрещающие'
         MANDATORY = 'mandatory', 'Предписывающие'
+        SPECIAL_MANDATORY = 'special_mandatory', 'Особых предписаний'
         INFO = 'info', 'Информационные'
+        DOP_INFO = 'dop_info', 'Дополнительной информации'
         SERVICE = 'service', 'Знаки сервиса'
+        PRIORITET = 'prioritet', 'Приоритета'
+
 
     name = models.CharField('Название', max_length=200)
     slug = models.SlugField(unique=True)

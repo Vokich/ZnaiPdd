@@ -198,6 +198,9 @@
   position: relative;
   border: 2px solid #f0f6fe;
   overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  min-width: 0; /* Защита от переполнения во flex/grid */
 }
 
 .sign-card::before {
@@ -242,6 +245,11 @@
   background: #fafcff;
   overflow: hidden;
   transition: background 0.3s;
+  font-size: 0.85rem; /* Для alt текста, если картинка не загрузится */
+  color: #666;
+  text-align: center;
+  padding: 10px;
+  word-break: break-word;
 }
 
 .sign-card.unlocked:hover .sign-card-image {
@@ -301,12 +309,13 @@
 .sign-card h3 {
   font-size: 1.05rem;
   color: #1A2C3E;
-  margin-bottom: 12px;
-  line-height: 1.4;
-  min-height: 2.8em;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  margin: auto 0 12px 0;
+  line-height: 1.3;
+  width: 100%;
+  /* Защита от длинных слов */
+  word-wrap: break-word;
+  overflow-wrap: anywhere;
+  hyphens: auto;
 }
 
 .sign-card.locked h3 {
@@ -317,7 +326,9 @@
 .sign-card a {
   text-decoration: none;
   color: inherit;
-  display: block;
+  display: flex;
+  flex-direction: column;
+  flex: 1;
 }
 
 .badge-unlocked,
@@ -329,6 +340,7 @@
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.8px;
+  margin-top: auto; /* Прижимает бейдж к низу */
 }
 
 .badge-unlocked {
@@ -370,6 +382,8 @@
   color: #1A2C3E;
   margin-bottom: 30px;
   text-align: center;
+  word-wrap: break-word;
+  overflow-wrap: anywhere;
 }
 
 .sign-image {
@@ -433,6 +447,8 @@
   line-height: 1.8;
   color: #444;
   margin-bottom: 10px;
+  word-wrap: break-word;
+  overflow-wrap: anywhere;
 }
 
 .sign-locked {
@@ -506,6 +522,8 @@
   background: #f8fafd;
   border-radius: 16px;
   border-left: 4px solid #347fdc;
+  word-wrap: break-word;
+  overflow-wrap: anywhere;
 }
 
 .sign-test .options {
@@ -552,6 +570,8 @@
   font-size: 1.05rem;
   color: #333;
   line-height: 1.5;
+  word-wrap: break-word;
+  overflow-wrap: anywhere;
 }
 
 .sign-test .error {
@@ -615,9 +635,8 @@
   }
 
   .sign-card { padding: 15px; }
-  .sign-card h3 { font-size: 0.95rem; min-height: 2.5em; }
-
   .sign-card-image { height: 110px; }
+  .sign-card h3 { font-size: 0.95rem; }
 
   .lock-placeholder {
     width: 55px;
@@ -640,15 +659,38 @@
 }
 
 @media (max-width: 400px) {
+  .signs-list {
+    padding: 0 10px;
+  }
+
   .signs-grid {
-    grid-template-columns: repeat(2, 1fr);
+    /* Изменено на minmax(0, 1fr), чтобы контент не раздвигал колонки */
+    grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 10px;
   }
 
-  .sign-card { padding: 12px; }
-  .sign-card h3 { font-size: 0.85rem; }
+  .sign-card {
+    padding: 10px;
+    border-radius: 16px;
+  }
 
-  .sign-card-image { height: 90px; }
+  .sign-card-image {
+    height: 90px;
+    border-radius: 10px;
+    margin-bottom: 10px;
+  }
+
+  .sign-card h3 {
+    font-size: 0.85rem;
+    line-height: 1.2;
+  }
+
+  .badge-unlocked,
+  .badge-locked {
+    font-size: 0.65rem;
+    padding: 4px 12px;
+    letter-spacing: 0.5px;
+  }
 
   .lock-placeholder {
     width: 45px;
