@@ -6,6 +6,7 @@ from django.http import HttpResponse, FileResponse
 from django.views.decorators.csrf import ensure_csrf_cookie
 from io import BytesIO
 import os
+import random
 from django.contrib.auth import update_session_auth_hash
 from django.conf import settings
 from .forms import (
@@ -431,10 +432,8 @@ def sign_detail(request, slug):
 def sign_test(request, slug):
     sign = get_object_or_404(RoadSign, slug=slug)
     progress, _ = UserSignProgress.objects.get_or_create(user=request.user, sign=sign)
-
     if progress.unlocked:
         return redirect('sign_detail', slug=slug)
-
     error = None
     if request.method == 'POST':
         try:
@@ -448,10 +447,12 @@ def sign_test(request, slug):
             return redirect('sign_detail', slug=slug)
         else:
             error = 'Неверный ответ. Попробуйте ещё раз.'
+    options_with_indices = list(enumerate(sign.answer_options, start=1))
+    random.shuffle(options_with_indices)
 
     context = {
         'sign': sign,
-        'options': sign.answer_options,
+        'options': options_with_indices,  
         'error': error,
     }
     return render(request, 'znaki/test.html', context)

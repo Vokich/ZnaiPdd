@@ -22,9 +22,9 @@
         <p class="question">{{ sign.question }}</p>
 
         <div class="options">
-            {% for option in options %}
+            {% for orig_idx, option in options %}
                 <label>
-                    <input type="radio" name="answer" value="{{ forloop.counter }}" required>
+                    <input type="radio" name="answer" value="{{ orig_idx }}" required>
                     <span>{{ option }}</span>
                 </label>
             {% endfor %}
