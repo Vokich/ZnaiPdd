@@ -1,0 +1,61 @@
+name: znaipdd-prod
+
+services:
+  web:
+    build: .
+    restart: unless-stopped
+    stop_grace_period: 30s
+    environment:
+      DJANGO_SETTINGS_MODULE: pdd_site.settings_prod
+      DJANGO_SECRET_KEY: ${DJANGO_SECRET_KEY:?set DJANGO_SECRET_KEY in .env}
+      DJANGO_DB_PATH: /data/db.sqlite3
+    volumes:
+      - type: bind
+        source: ${DJANGO_DATA_DIR:?set DJANGO_DATA_DIR in .env}
+        target: /data
+        bind:
+          create_host_path: false
+      - type: bind
+        source: ${DJANGO_MEDIA_DIR:?set DJANGO_MEDIA_DIR in .env}
+        target: /app/media
+        bind:
+          create_host_path: false
+    healthcheck:
+      test:
+        - CMD
+        - python
+        - -c
+        - |
+          from http.client import HTTPConnection
+          conn = HTTPConnection('127.0.0.1', 8000, timeout=3)
+          conn.request('GET', '/', headers={'Host': 'xn--80aiajlwq.xn--p1ai', 'X-Forwarded-Proto': 'https'})
+          raise SystemExit(conn.getresponse().status != 200)
+      start_period: 10s
+      interval: 30s
+      timeout: 5s
+      retries: 3
+
+  caddy:
+    image: caddy:2.11-alpine
+    restart: unless-stopped
+    depends_on:
+      web:
+        condition: service_healthy
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+      - type: bind
+        source: ${DJANGO_MEDIA_DIR:?set DJANGO_MEDIA_DIR in .env}
+        target: /srv/media
+        read_only: true
+        bind:
+          create_host_path: false
+
+volumes:
+  caddy_data:
+  caddy_config:

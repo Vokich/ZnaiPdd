@@ -1,0 +1,13 @@
+import os
+
+from .settings import *
+
+
+DEBUG = False
+SECRET_KEY = os.environ['DJANGO_SECRET_KEY']
+ALLOWED_HOSTS = ['xn--80aiajlwq.xn--p1ai']
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+SECURE_SSL_REDIRECT = True
+SECURE_HSTS_SECONDS = 86400
+SESSION_COOKIE_SECURE = True
+CSRF_COOKIE_SECURE = True

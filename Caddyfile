@@ -1,0 +1,13 @@
+xn--80aiajlwq.xn--p1ai {
+	encode zstd gzip
+
+	handle_path /media/* {
+		root * /srv/media
+		header X-Content-Type-Options nosniff
+		file_server
+	}
+
+	handle {
+		reverse_proxy web:8000
+	}
+}
