@@ -1,0 +1,7 @@
+<div class="municipality-search" data-search-url="{% url 'municipality_search' %}">
+  {{ field }}
+  <div class="municipality-results" hidden>
+    <ul id="{{ field.id_for_label }}_results" role="listbox" aria-label="Муниципалитеты"></ul>
+    <div class="municipality-status" role="status"></div>
+  </div>
+</div>

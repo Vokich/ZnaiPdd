@@ -29,6 +29,7 @@ urlpatterns = [
     path('login/', views.user_login, name='login'),
     path('logout/', views.logout_form, name='logout'),
     path('reg/', views.reg, name='reg'),
+    path('municipalities/search/', views.municipality_search, name='municipality_search'),
     path('test-result-child/', views.test_result_child, name='result_child'),
     path('test-result-teen/', views.test_result_teen, name='result_teen'),
     path('test-result-adult/', views.test_result_adult, name='result_adults'),

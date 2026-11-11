@@ -1,0 +1,43 @@
+.municipality-search {
+    min-width: 0;
+}
+
+.municipality-search input {
+    box-sizing: border-box;
+    width: 100%;
+}
+
+.municipality-results {
+    margin-top: 6px;
+    border: 2px solid #d8e7f5;
+    border-radius: 14px;
+    background: #fff;
+    color: #2c4c7c;
+}
+
+.municipality-results ul {
+    max-height: 15rem;
+    overflow-y: auto;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.municipality-results li,
+.municipality-status {
+    padding: 10px 14px;
+    overflow-wrap: anywhere;
+}
+
+.municipality-results li {
+    cursor: pointer;
+}
+
+.municipality-results li:hover,
+.municipality-results li[aria-selected="true"] {
+    background: #eaf3ff;
+}
+
+.municipality-status:empty {
+    padding: 0;
+}

@@ -3,6 +3,8 @@
 {% block content %}
 {% block extra_css %}{% endblock %}
 <link rel="stylesheet" type="text/css" href="{% static '../static/css/profile_edit.css' %}">
+<link rel="stylesheet" href="{% static 'css/municipalities.css' %}">
+<script src="{% static 'js/municipalities.js' %}" defer></script>
 <div class="edit-wrap">
   <div class="edit-card">
     <h2>Редактирование профиля</h2>
@@ -62,7 +64,7 @@
 
         <div class="form-group full-width">
           <label for="{{ form.region.id_for_label }}">{{ form.region.label }}</label>
-          {{ form.region }}
+          {% include 'municipality_field.html' with field=form.region only %}
           {% if form.region.errors %}<ul class="errorlist">{% for e in form.region.errors %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}
         </div>
 

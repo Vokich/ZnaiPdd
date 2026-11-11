@@ -2,6 +2,7 @@ from django import forms
 from django.contrib.auth.models import User
 from django.core.exceptions import ValidationError
 from .models import Profile, TeacherLessonReport
+from .municipalities import is_municipality
 
 
 class UserRegistrationForm(forms.ModelForm):
@@ -86,6 +87,12 @@ class UserRegistrationForm(forms.ModelForm):
         if birth_date and birth_date > date.today():
             raise ValidationError("Дата рождения не может быть в будущем")
         return birth_date
+
+    def clean_region(self):
+        region = self.cleaned_data['region']
+        if not is_municipality(region):
+            raise ValidationError('Выберите муниципалитет из списка')
+        return region
 
     def clean(self):
         cleaned_data = super().clean()
@@ -1255,6 +1262,14 @@ class UserProfileForm(forms.ModelForm):
     if birth_date and birth_date > date.today():
       raise ValidationError("Дата рождения не может быть в будущем")
     return birth_date
+
+  def clean_region(self):
+    region = self.cleaned_data['region']
+    if self.profile_instance and region == self.profile_instance.region.strip():
+      return self.profile_instance.region
+    if not is_municipality(region):
+      raise ValidationError('Выберите муниципалитет из списка')
+    return region
 
   def clean(self):
     cleaned_data = super().clean()

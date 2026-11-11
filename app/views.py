@@ -2,8 +2,9 @@ from django.contrib.auth import login as auth_login, logout, authenticate
 from django.shortcuts import render, redirect
 from django.contrib.auth.decorators import user_passes_test, login_required
 from django.contrib import messages
-from django.http import HttpResponse, FileResponse
+from django.http import HttpResponse, FileResponse, JsonResponse
 from django.views.decorators.csrf import ensure_csrf_cookie
+from django.views.decorators.http import require_GET
 from io import BytesIO
 import os
 import random
@@ -34,6 +35,7 @@ from .certificate_generator import CertificateGenerator
 from .models import RoadSign, UserSignProgress
 from django.shortcuts import get_object_or_404
 from django.utils import timezone
+from .municipalities import search_municipalities
 
 def get_profile(user):
     return getattr(user, 'profile', None)
@@ -204,6 +206,12 @@ def pdd_teacher(request):
     'reports': reports,
   }
   return render(request, 'pdd-teacher.html', context)
+
+
+@require_GET
+def municipality_search(request):
+    results, more = search_municipalities(request.GET.get('q', ''))
+    return JsonResponse({'results': results, 'more': more}, json_dumps_params={'ensure_ascii': False})
 
 
 @ensure_csrf_cookie
