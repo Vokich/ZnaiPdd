@@ -1,0 +1,52 @@
+{% extends "admin/base_site.html" %}
+
+{% block branding %}
+  <div id="site-name">
+    <a href="{% url 'admin:index' %}" aria-label="{{ site_header }}">знай пдд</a>
+    <span class="admin-brand-caption">Администрирование</span>
+  </div>
+  {% if user.is_anonymous %}
+    {% include "admin/color_theme_toggle.html" %}
+  {% endif %}
+{% endblock %}
+
+{% block nav-global %}
+  {% if has_permission and available_apps %}
+    <div class="admin-header-actions">
+      <button type="button" class="admin-jump-trigger" aria-label="Быстрый переход" aria-haspopup="dialog" aria-controls="admin-jump" hidden>
+        <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="10.5" cy="10.5" r="5.5"/><path d="m15 15 4 4" stroke-linecap="round"/></svg>
+        <span>Быстрый переход</span><kbd>Ctrl K</kbd>
+      </button>
+      <details class="admin-mobile-nav">
+        <summary>Разделы</summary>
+        <nav class="admin-mobile-nav-panel" aria-label="Разделы админки">
+          {% include "admin/app_list.html" with app_list=available_apps show_changelinks=False %}
+        </nav>
+      </details>
+    </div>
+    <dialog class="admin-jump" id="admin-jump" aria-labelledby="admin-jump-title">
+      <div class="admin-jump-head">
+        <h2 id="admin-jump-title">Быстрый переход</h2>
+        <button type="button" class="admin-jump-close" aria-label="Закрыть быстрый переход">×</button>
+      </div>
+      <label for="admin-jump-query" class="admin-jump-label">Раздел или действие</label>
+      <input type="search" id="admin-jump-query" placeholder="Например, знаки или добавить" autocomplete="off" autofocus>
+      <div class="admin-jump-body">
+        <ul class="admin-jump-results" aria-label="Доступные переходы">
+          {% for app in available_apps %}
+            {% for model in app.models %}
+              {% if model.admin_url %}
+                <li data-keywords="{{ app.name }} {{ model.object_name }}"><a href="{{ model.admin_url }}"><span><strong>{{ model.name }}</strong><small>{{ app.name }}</small></span><span class="admin-jump-arrow" aria-hidden="true">↗</span></a></li>
+              {% endif %}
+              {% if model.add_url %}
+                <li data-keywords="{{ app.name }} {{ model.object_name }}"><a href="{{ model.add_url }}"><span><strong>Добавить · {{ model.name }}</strong><small>{{ app.name }}</small></span><span class="admin-jump-arrow" aria-hidden="true">+</span></a></li>
+              {% endif %}
+            {% endfor %}
+          {% endfor %}
+        </ul>
+        <p class="admin-jump-empty" role="status" hidden>Нет совпадений. Попробуйте другое слово.</p>
+      </div>
+      <p class="admin-jump-hint"><kbd>↑</kbd> <kbd>↓</kbd> выбрать <span>·</span> <kbd>Enter</kbd> открыть <span>·</span> <kbd>Esc</kbd> закрыть</p>
+    </dialog>
+  {% endif %}
+{% endblock %}

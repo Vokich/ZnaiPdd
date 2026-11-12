@@ -1,11 +1,14 @@
 import os
 
 from .settings import *
+from django.core.exceptions import ImproperlyConfigured
 
 
 DEBUG = False
-SECRET_KEY = os.environ['DJANGO_SECRET_KEY']
-ALLOWED_HOSTS = ['xn--80aiajlwq.xn--p1ai']
+SECRET_KEY = os.environ.get('DJANGO_SECRET_KEY')
+if not SECRET_KEY:
+    raise ImproperlyConfigured('Set DJANGO_SECRET_KEY for the prod profile.')
+ALLOWED_HOSTS = [os.environ.get('DJANGO_DOMAIN', 'xn--80aiajlwq.xn--p1ai')]
 SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 SECURE_SSL_REDIRECT = True
 SECURE_HSTS_SECONDS = 86400

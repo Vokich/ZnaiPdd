@@ -1,4 +1,5 @@
 from django.contrib import admin
+from django import forms
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
 from django.contrib.auth.models import User
 from django.urls import reverse
@@ -99,9 +100,18 @@ admin.site.site_header = 'Админ-панель «Знай ПДД»'
 admin.site.site_title = 'Знай ПДД'
 admin.site.index_title = 'Управление сайтом'
 
+
+class RoadSignAdminForm(forms.ModelForm):
+    class Meta:
+        model = RoadSign
+        fields = '__all__'
+        labels = {'slug': 'Адрес знака', 'category': 'Категория'}
+
+
 @admin.register(RoadSign)
 class RoadSignAdmin(admin.ModelAdmin):
-    list_display = ('name', 'category', 'order', 'image_preview')
+    form = RoadSignAdminForm
+    list_display = ('name', 'category_label', 'order', 'image_preview')
     list_filter = ('category',)
     search_fields = ('name',)
     list_editable = ('order',)
@@ -123,6 +133,10 @@ class RoadSignAdmin(admin.ModelAdmin):
             return format_html('<img src="{}" style="max-height: 60px;" />', obj.image.url)
         return '—'
     image_preview.short_description = 'Превью'
+
+    @admin.display(description='Категория', ordering='category')
+    def category_label(self, obj):
+        return obj.get_category_display()
 
 
 @admin.register(UserSignProgress)

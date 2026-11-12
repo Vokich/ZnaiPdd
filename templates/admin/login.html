@@ -1,0 +1,14 @@
+{% extends "admin/login.html" %}
+
+{% block content %}
+  <div class="admin-login-layout">
+    <aside class="admin-login-art" aria-hidden="true">
+      <p>Управление порталом</p>
+      <div class="admin-login-badge"><span>↑</span></div>
+    </aside>
+    <section class="admin-login-panel" aria-labelledby="admin-login-heading">
+      <h1 id="admin-login-heading">Вход в админку</h1>
+      {{ block.super }}
+    </section>
+  </div>
+{% endblock %}

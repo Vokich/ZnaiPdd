@@ -1,0 +1,13 @@
+{% extends "admin/base.html" %}
+{% load static %}
+
+{% block responsive %}
+  {{ block.super }}
+  <link rel="stylesheet" href="{% static 'admin-theme/theme.css' %}">
+{% endblock %}
+
+{% block extrahead %}
+  {{ block.super }}
+  <script src="{% static 'admin-theme/navigation.js' %}"></script>
+  <script src="{% static 'admin-theme/scroll.js' %}" defer></script>
+{% endblock %}

@@ -1,0 +1,89 @@
+.ribbon-track, .ribbon-run { display: flex; flex: none; width: max-content; }
+.ribbon-run > span { padding-inline-end: .65em; }
+
+.motion-toggle { display: none; }
+
+@media (prefers-reduced-motion: no-preference) {
+  .landing[data-scenes] .motion-toggle {
+    position: absolute;
+    z-index: 2;
+    inset: auto max(16px, 4.45cqw) 5px auto;
+    display: grid;
+    place-items: center;
+    width: 44px;
+    height: 44px;
+    padding: 0;
+    border: 1px solid var(--border);
+    border-radius: 50%;
+    color: var(--blue);
+    background: var(--pale);
+    transition: background var(--motion), color var(--motion), scale var(--motion);
+  }
+  .motion-toggle:is(:hover, :focus-visible) { background: var(--blue); color: white; }
+  .motion-toggle:active { scale: .9; }
+  .motion-toggle > span { width: 12px; height: 13px; border-inline: 3px solid; border-radius: 1px; }
+  .landing[data-paused] .motion-toggle > span { border: 0; background: currentColor; clip-path: polygon(14% 0, 100% 50%, 14% 100%); }
+
+  .landing[data-intro] .hero-letter { animation: headline-type 125ms var(--ease-out) backwards; }
+  .landing[data-intro] .hero-subtitle { animation: headline-lift 740ms var(--spring) 215ms backwards; }
+  .landing[data-intro] .hero-ribbon { animation: ribbon-unfurl 820ms var(--ease-out) 90ms backwards; }
+  .landing[data-intro] .hero-portrait { animation: portrait-arrive 1040ms var(--spring) var(--arrive-delay) backwards; }
+  .portrait-student { --arrive-delay: 155ms; --arrive-x: 68px; --arrive-y: 49px; --arrive-rotation: 13deg; }
+  .portrait-teacher { --arrive-delay: 250ms; --arrive-x: -62px; --arrive-y: 54px; --arrive-rotation: -14deg; }
+
+  .ribbon-track { animation: ribbon-travel 72s linear infinite; }
+  .welcome-badge-slot .welcome-badge { animation: badge-rock 7.6s ease-in-out -1s infinite; }
+  .welcome .tile-icon { animation: tile-rock 6.8s ease-in-out var(--phase, 0s) infinite; }
+  .welcome .icon-arrow { --phase: -1.1s; --rock: 8deg; }
+  .welcome .icon-crossing { --phase: -2.6s; --rock: -4deg; }
+  .welcome .icon-check { --phase: -3.8s; --rock: 6deg; }
+  .landing :is(.ribbon-track, .welcome .tile-icon, .welcome-badge-slot .welcome-badge) { animation-play-state: paused; }
+  .landing:not([data-paused]) [data-loop='visible'] :is(.ribbon-track, .welcome-badge-slot .welcome-badge) { animation-play-state: running; }
+  .landing:not([data-paused]) .welcome-tiles[data-loop='visible'][data-reveal='active'] .tile-icon { animation-play-state: running; }
+  .landing:not([data-paused]) .welcome-tiles[data-loop='visible'][data-reveal='instant'] .tile-icon { animation-play-state: running; }
+
+  .landing[data-scenes]:not([data-paused]) [data-reveal='']:not(.welcome-action, :focus-within) { opacity: 0; }
+  .landing:not([data-paused]) :is(.welcome-copy, .audience-heading, .audience-card)[data-reveal='active'] {
+    animation: reveal-lift 710ms var(--spring) var(--reveal-delay, 0ms) backwards;
+  }
+  .landing:not([data-paused]) .welcome-copy[data-reveal='active'] :is(h2, p) { animation: headline-lift 625ms var(--spring) 75ms backwards; }
+  .landing:not([data-paused]) .welcome-copy[data-reveal='active'] p { animation-delay: 145ms; }
+  .landing:not([data-paused]) .welcome-tiles[data-reveal='active'] li { animation: tile-arrive 720ms var(--spring) var(--tile-delay, 0ms) backwards; }
+  .welcome-tiles li:nth-child(2) { --tile-delay: 64ms; }
+  .welcome-tiles li:nth-child(3) { --tile-delay: 128ms; }
+  .welcome-tiles li:nth-child(4) { --tile-delay: 192ms; }
+  .landing:not([data-paused]) .welcome-action[data-reveal='active'] { animation: action-arrive 460ms var(--spring) 55ms backwards; }
+  .landing:not([data-paused]) .welcome-badge-slot[data-reveal='active'] { animation: tile-arrive 850ms var(--spring) 170ms backwards; }
+  .landing:not([data-paused]) .audience-background[data-reveal='active'] { animation: audience-grow 920ms var(--ease-out) backwards; transform-origin: 50% 0%; }
+  .audience-heading { --reveal-delay: 100ms; }
+  .audience-card { --reveal-delay: 70ms; }
+  .audience-card:nth-child(2) { --reveal-delay: 160ms; }
+  .audience-card .character { translate: 0 var(--depth-y, 0px); }
+
+  @media (max-width: 760px) {
+    .portrait-student { --arrive-x: 29px; --arrive-y: 29px; --arrive-rotation: 10deg; }
+    .portrait-teacher { --arrive-x: -27px; --arrive-y: 32px; --arrive-rotation: -10deg; }
+    .audience-card:nth-child(2) { --reveal-delay: 70ms; }
+  }
+}
+
+@keyframes headline-type { from { opacity: 0; } }
+@keyframes headline-lift { from { opacity: 0; translate: 0 .35em; } }
+@keyframes ribbon-unfurl { from { opacity: 0; clip-path: inset(0 100% 0 0); } to { opacity: 1; clip-path: inset(0); } }
+@keyframes ribbon-travel { to { transform: translateX(-50%); } }
+@keyframes portrait-arrive { from { opacity: 0; translate: var(--arrive-x) var(--arrive-y); rotate: var(--arrive-rotation); scale: .74; } }
+@keyframes reveal-lift { from { opacity: 0; translate: 0 27px; } }
+@keyframes tile-arrive { from { opacity: 0; translate: 0 24px; scale: .91; } }
+@keyframes action-arrive { from { opacity: .78; translate: 0 13px; scale: .98; } }
+@keyframes audience-grow { from { opacity: .12; scale: .94 .91; } }
+@keyframes badge-rock {
+  0%, 100% { transform: translateY(0) rotate(-4deg); }
+  40% { transform: translateY(-10px) rotate(5deg); }
+  70% { transform: translateY(-3px) rotate(1deg); }
+}
+@keyframes tile-rock {
+  0%, 100% { transform: translateY(0) rotate(0); }
+  26% { transform: translateY(-4px) rotate(var(--rock, -7deg)); }
+  58% { transform: translateY(2px) rotate(calc(var(--rock, -7deg) * -.35)); }
+  80% { transform: translateY(-1px) rotate(0); }
+}

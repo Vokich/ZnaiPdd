@@ -1,22 +1,96 @@
 name: znaipdd-prod
 
+x-backend: &backend
+  build:
+    context: .
+    target: backend
+  stop_grace_period: 30s
+
+x-superuser-env: &superuser-env
+  DJANGO_SUPERUSER_USERNAME: ${DJANGO_SUPERUSER_USERNAME:-}
+  DJANGO_SUPERUSER_PASSWORD: ${DJANGO_SUPERUSER_PASSWORD:-}
+
 services:
-  web:
-    build: .
-    restart: unless-stopped
-    stop_grace_period: 30s
+  api-dev:
+    <<: *backend
+    profiles: [dev]
     environment:
+      <<: *superuser-env
+      DJANGO_DB_PATH: /data/db.sqlite3
+    command: [sh, -ec, "python manage.py migrate --noinput && python manage.py bootstrap_admin && exec python manage.py runserver 0.0.0.0:8000"]
+    volumes:
+      - dev_db:/data
+      - dev_media:/app/media
+    healthcheck:
+      test: [CMD, python, -c, "from urllib.request import urlopen; urlopen('http://127.0.0.1:8000/api/health/', timeout=3)"]
+      interval: 5s
+      timeout: 4s
+      retries: 10
+    develop:
+      watch:
+        - action: sync
+          path: ./app
+          target: /app/app
+          ignore: [__pycache__/]
+        - action: sync
+          path: ./pdd_site
+          target: /app/pdd_site
+          ignore: [__pycache__/]
+        - action: sync
+          path: ./templates
+          target: /app/templates
+        - action: rebuild
+          path: ./requirements-prod.txt
+        - action: rebuild
+          path: ./requirements.txt
+
+  frontend-dev:
+    profiles: [dev]
+    build:
+      context: .
+      target: frontend-dev
+    depends_on:
+      api-dev:
+        condition: service_healthy
+    environment:
+      DJANGO_PROXY_TARGET: http://api-dev:8000
+    ports:
+      - "127.0.0.1:${DEV_PORT:-5173}:5173"
+    healthcheck:
+      test: [CMD, node, -e, "fetch('http://127.0.0.1:5173/api/health/').then(r => { if (!r.ok) process.exit(1) }).catch(() => process.exit(1))"]
+      interval: 5s
+      timeout: 4s
+      retries: 10
+    develop:
+      watch:
+        - action: sync
+          path: ./frontend
+          target: /frontend
+          ignore: [node_modules/, dist/, package.json, package-lock.json]
+        - action: rebuild
+          path: ./frontend/package.json
+        - action: rebuild
+          path: ./frontend/package-lock.json
+
+  web:
+    <<: *backend
+    profiles: [prod]
+    restart: unless-stopped
+    command: [sh, -ec, "python manage.py migrate --noinput && python manage.py bootstrap_admin && exec python -m uvicorn pdd_site.asgi:application --host 0.0.0.0 --port 8000 --no-proxy-headers"]
+    environment:
+      <<: *superuser-env
       DJANGO_SETTINGS_MODULE: pdd_site.settings_prod
-      DJANGO_SECRET_KEY: ${DJANGO_SECRET_KEY:?set DJANGO_SECRET_KEY in .env}
+      DJANGO_DOMAIN: ${DJANGO_DOMAIN:-xn--80aiajlwq.xn--p1ai}
+      DJANGO_SECRET_KEY: ${DJANGO_SECRET_KEY:-}
       DJANGO_DB_PATH: /data/db.sqlite3
     volumes:
       - type: bind
-        source: ${DJANGO_DATA_DIR:?set DJANGO_DATA_DIR in .env}
+        source: ${DJANGO_DATA_DIR:-/srv/znaipdd-data/db}
         target: /data
         bind:
           create_host_path: false
       - type: bind
-        source: ${DJANGO_MEDIA_DIR:?set DJANGO_MEDIA_DIR in .env}
+        source: ${DJANGO_MEDIA_DIR:-/srv/znaipdd-data/media}
         target: /app/media
         bind:
           create_host_path: false
@@ -26,18 +100,24 @@ services:
         - python
         - -c
         - |
+          import os
           from http.client import HTTPConnection
           conn = HTTPConnection('127.0.0.1', 8000, timeout=3)
-          conn.request('GET', '/', headers={'Host': 'xn--80aiajlwq.xn--p1ai', 'X-Forwarded-Proto': 'https'})
+          conn.request('GET', '/api/health/', headers={'Host': os.environ['DJANGO_DOMAIN'], 'X-Forwarded-Proto': 'https'})
           raise SystemExit(conn.getresponse().status != 200)
-      start_period: 10s
+      start_period: 15s
       interval: 30s
       timeout: 5s
       retries: 3
 
   caddy:
-    image: caddy:2.11-alpine
+    profiles: [prod]
+    build:
+      context: .
+      target: frontend-prod
     restart: unless-stopped
+    environment:
+      DJANGO_DOMAIN: ${DJANGO_DOMAIN:-xn--80aiajlwq.xn--p1ai}
     depends_on:
       web:
         condition: service_healthy
@@ -46,16 +126,17 @@ services:
       - "443:443"
       - "443:443/udp"
     volumes:
-      - ./Caddyfile:/etc/caddy/Caddyfile:ro
       - caddy_data:/data
       - caddy_config:/config
       - type: bind
-        source: ${DJANGO_MEDIA_DIR:?set DJANGO_MEDIA_DIR in .env}
+        source: ${DJANGO_MEDIA_DIR:-/srv/znaipdd-data/media}
         target: /srv/media
         read_only: true
         bind:
           create_host_path: false
 
 volumes:
+  dev_db:
+  dev_media:
   caddy_data:
   caddy_config:

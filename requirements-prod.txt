@@ -1,0 +1,9 @@
+Django
+djangorestframework==3.16.1
+django-phonenumber-field
+Pillow
+pypdf
+reportlab
+tzdata
+uvicorn
+whitenoise
