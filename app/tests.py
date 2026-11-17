@@ -2,6 +2,8 @@ from django.contrib.auth.models import User
 from django.test import SimpleTestCase, TestCase
 from django.urls import reverse
 
+from .models import Profile
+
 
 class MunicipalitySearchTests(SimpleTestCase):
     def search(self, query):
@@ -29,45 +31,37 @@ class MunicipalitySearchTests(SimpleTestCase):
         self.assertEqual(self.search('несуществующиймуниципалитет')['results'], [])
 
 
-class MunicipalityFormTests(TestCase):
-    region = 'город Елец, Липецкая область'
+class LegacyProfilePageTests(TestCase):
     form_data = {
         'username': 'municipality-test',
         'password': 'test-password',
         'email': 'municipality@example.com',
         'surname1': 'Иванов',
         'name': 'Иван',
-        'school': 'Школа',
-        'birth_date': '2010-01-01',
         'role': 'child',
     }
 
-    def test_registration_requires_a_municipality_and_saves_it(self):
+    def test_registration_requires_consent_and_full_name(self):
         url = reverse('reg')
-        response = self.client.post(url, {**self.form_data, 'region': 'Липецкая область'})
-        self.assertFormError(response.context['form'], 'region', 'Выберите муниципалитет из списка')
+        response = self.client.post(url, self.form_data)
+        self.assertIn('consent', response.context['form'].errors)
+        response = self.client.post(url, {**self.form_data, 'name': '', 'consent': 'on'})
+        self.assertIn('name', response.context['form'].errors)
         self.assertFalse(User.objects.filter(username=self.form_data['username']).exists())
 
-        response = self.client.post(url, {**self.form_data, 'region': self.region})
+        response = self.client.post(url, {**self.form_data, 'consent': 'on', 'surname2': 'Иванович'})
         self.assertRedirects(response, reverse('index'), fetch_redirect_response=False)
-        self.assertEqual(User.objects.get(username=self.form_data['username']).profile.region, self.region)
+        profile = User.objects.get(username=self.form_data['username']).profile
+        self.assertEqual(profile.surname2, 'Иванович')
+        self.assertIsNone(profile.birth_date)
 
-    def test_profile_keeps_old_value_until_a_new_municipality_is_selected(self):
+    def test_profile_preserves_old_municipality_when_editing(self):
         user = User.objects.create_user(username=self.form_data['username'], email=self.form_data['email'])
-        profile = user.profile
-        profile.role = self.form_data['role']
-        profile.region = 'Старое название'
-        profile.save(update_fields=['role', 'region'])
+        profile = Profile.objects.create(user=user, role=Profile.Role.CHILD, region='Старое название')
         self.client.force_login(user)
 
         url = reverse('profile_edit')
-        self.assertContains(self.client.get(url), reverse('municipality_search'))
-        response = self.client.post(url, {**self.form_data, 'region': 'Старое название'})
+        response = self.client.post(url, {**self.form_data, 'region': 'Новый муниципалитет'})
         self.assertRedirects(response, reverse('profile'), fetch_redirect_response=False)
         profile.refresh_from_db()
         self.assertEqual(profile.region, 'Старое название')
-
-        response = self.client.post(url, {**self.form_data, 'region': self.region})
-        self.assertRedirects(response, reverse('profile'), fetch_redirect_response=False)
-        profile.refresh_from_db()
-        self.assertEqual(profile.region, self.region)

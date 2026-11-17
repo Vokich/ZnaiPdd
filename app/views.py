@@ -2,14 +2,18 @@ from django.contrib.auth import login as auth_login, logout, authenticate
 from django.shortcuts import render, redirect
 from django.contrib.auth.decorators import user_passes_test, login_required
 from django.contrib import messages
-from django.http import HttpResponse, FileResponse, JsonResponse
+from django.http import Http404, HttpResponse, FileResponse, JsonResponse
+from django.views.decorators.cache import never_cache
 from django.views.decorators.csrf import ensure_csrf_cookie
 from django.views.decorators.http import require_GET
 from io import BytesIO
 import os
 import random
 from django.contrib.auth import update_session_auth_hash
+from django.contrib.auth.models import User
 from django.conf import settings
+from django.db import IntegrityError, transaction
+from django.core.exceptions import PermissionDenied
 from .forms import (
   UserRegistrationForm,
   LoginForm,
@@ -22,30 +26,16 @@ from .forms import (
 )
 
 
-from .forms import (
-  UserRegistrationForm,
-  LoginForm,
-  TeenPddTestForm,
-  JuniorPddTestForm,
-  AdultPddTestForm,
-  TeacherLessonReportForm
-)
-from .models import TestResult, TeacherLessonReport, Certificate
+from .access import account_role, can_submit_lesson_reports, is_child
+from .models import TestResult, Certificate
 from .certificate_generator import CertificateGenerator
-from .models import RoadSign, UserSignProgress
+from .models import RoadSign
 from django.shortcuts import get_object_or_404
-from django.utils import timezone
 from .municipalities import search_municipalities
+from .sign_catalog import catalog_signs, learned_sign_ids, mark_sign_learned, published_signs
 
 def get_profile(user):
     return getattr(user, 'profile', None)
-
-def is_child(user):
-  return user.is_authenticated and hasattr(user, 'profile') and user.profile.role == 'child'
-
-
-def is_teacher(user):
-  return user.is_authenticated and hasattr(user, 'profile') and user.profile.role == 'teacher'
 
 def index(request):
   return render(request, 'index.html')
@@ -185,9 +175,13 @@ def test_result_adult(request):
   return render(request, 'pdd_adult_success.html', context)
 
 
-@user_passes_test(is_teacher)
+@login_required
 def pdd_teacher(request):
-  reports = TeacherLessonReport.objects.filter(user=request.user).order_by('-lesson_date')
+  if not can_submit_lesson_reports(request.user):
+    if request.method == 'POST':
+      raise PermissionDenied
+    return render(request, 'pdd-teacher.html')
+  reports = request.user.lesson_reports.select_related('organization__municipality', 'practice')
   if request.method == 'POST':
     form = TeacherLessonReportForm(request.POST)
     if form.is_valid():
@@ -219,10 +213,16 @@ def reg(request):
   if request.method == 'POST':
     form = UserRegistrationForm(request.POST)
     if form.is_valid():
-      user = form.save()
-      auth_login(request, user)
-      messages.success(request, 'Регистрация успешно завершена!')
-      return redirect('index')
+      try:
+        user = form.save()
+      except IntegrityError:
+        if not User.objects.filter(username=form.cleaned_data['username']).exists():
+          raise
+        form.add_error('username', 'Пользователь с таким логином уже существует.')
+      else:
+        auth_login(request, user)
+        messages.success(request, 'Регистрация успешно завершена!')
+        return redirect('index')
     else:
       messages.error(request, 'Пожалуйста, исправьте ошибки в форме.')
   else:
@@ -352,16 +352,14 @@ def privacy_policy(request):
 @login_required
 def profile_view(request):
     profile = get_profile(request.user)
-    if profile is None:
-        return redirect('index')
-
-    test_results = TestResult.objects.filter(user=request.user).order_by('-completed_at')[:5]
-    reports_count = TeacherLessonReport.objects.filter(user=request.user).count() if profile.role == 'teacher' else 0
+    test_results = request.user.test_results.all()[:5] if is_child(request.user) else []
+    can_submit_reports = can_submit_lesson_reports(request.user)
 
     context = {
         'profile': profile,
         'test_results': test_results,
-        'reports_count': reports_count,
+        'account_role': account_role(request.user),
+        'reports_count': request.user.lesson_reports.count() if can_submit_reports else 0,
     }
     return render(request, 'profile.html', context)
 
@@ -369,16 +367,18 @@ def profile_view(request):
 @login_required
 def profile_edit(request):
     profile = get_profile(request.user)
-    if profile is None:
-        return redirect('index')
-
     if request.method == 'POST':
-        form = UserProfileForm(request.POST, instance=request.user, profile_instance=profile)
-        if form.is_valid():
-            form.save()
-            return redirect('profile')
-        else:
-            messages.error(request, 'Пожалуйста, исправьте ошибки в форме.')
+        try:
+            with transaction.atomic():
+                user = User.objects.select_for_update().get(pk=request.user.pk)
+                form = UserProfileForm(request.POST, instance=user, profile_instance=get_profile(user))
+                if form.is_valid():
+                    form.save()
+                    return redirect('profile')
+        except IntegrityError:
+            if not User.objects.exclude(pk=request.user.pk).filter(username=form.cleaned_data['username']).exists():
+                raise
+            form.add_error('username', 'Пользователь с таким логином уже существует.')
     else:
         form = UserProfileForm(instance=request.user, profile_instance=profile)
 
@@ -403,44 +403,39 @@ def profile_password_change(request):
 
 
 def signs_landing(request):
-    total = RoadSign.objects.count()
+    total = published_signs().count()
     return render(request, 'znaki/landing.html', {'total': total})
 
 
+@never_cache
 def signs_list(request):
     category = request.GET.get('category', '')
-    signs = RoadSign.objects.all()
-    if category:
-        signs = signs.filter(category=category)
-
-    unlocked_ids = []
-    if request.user.is_authenticated:
-        unlocked_ids = list(
-            UserSignProgress.objects.filter(user=request.user, unlocked=True)
-            .values_list('sign_id', flat=True)
-        )
+    query = request.GET.get('q', '')[:120]
 
     context = {
-        'signs': signs,
+        'signs': catalog_signs(category, query),
         'categories': RoadSign.Category.choices,
         'current_category': category,
-        'unlocked_ids': unlocked_ids,
+        'query': query,
+        'unlocked_ids': learned_sign_ids(request.user),
     }
     return render(request, 'znaki/list.html', context)
 
 
-@login_required
+@never_cache
 def sign_detail(request, slug):
-    sign = get_object_or_404(RoadSign, slug=slug)
-    progress, _ = UserSignProgress.objects.get_or_create(user=request.user, sign=sign)
-    return render(request, 'znaki/detail.html', {'sign': sign, 'progress': progress})
+    sign = get_object_or_404(published_signs(), slug=slug)
+    learned = request.user.is_authenticated and request.user.sign_progress.filter(sign=sign, unlocked=True).exists()
+    return render(request, 'znaki/detail.html', {'sign': sign, 'learned': learned})
 
 
 @login_required
+@never_cache
 def sign_test(request, slug):
-    sign = get_object_or_404(RoadSign, slug=slug)
-    progress, _ = UserSignProgress.objects.get_or_create(user=request.user, sign=sign)
-    if progress.unlocked:
+    sign = get_object_or_404(published_signs(), slug=slug)
+    if not sign.has_test:
+        raise Http404
+    if request.user.sign_progress.filter(sign=sign, unlocked=True).exists():
         return redirect('sign_detail', slug=slug)
     error = None
     if request.method == 'POST':
@@ -449,9 +444,7 @@ def sign_test(request, slug):
         except (TypeError, ValueError):
             answer = 0
         if answer == sign.correct_answer:
-            progress.unlocked = True
-            progress.test_passed_at = timezone.now()
-            progress.save()
+            mark_sign_learned(request.user, sign)
             return redirect('sign_detail', slug=slug)
         else:
             error = 'Неверный ответ. Попробуйте ещё раз.'

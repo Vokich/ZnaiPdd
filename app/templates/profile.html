@@ -9,9 +9,9 @@
       {{ profile.name|first|upper }}{{ profile.surname1|first|upper }}
     </div>
     <div class="profile-info">
-      <h2>{{ profile.surname1 }} {{ profile.name }} {{ profile.surname2 }}</h2>
-      <span class="profile-role-badge {% if profile.role == 'teacher' %}teacher{% endif %}">
-        {{ profile.get_role_display }}
+      <h2>{% if profile.name %}{{ profile.surname1 }} {{ profile.name }} {{ profile.surname2 }}{% else %}{{ user.username }}{% endif %}</h2>
+      <span class="profile-role-badge {% if account_role == 'teacher' %}teacher{% endif %}">
+        {% if account_role == 'admin' %}Администратор{% elif account_role %}{{ profile.get_role_display }}{% else %}Нужно завершить настройку{% endif %}
       </span>
       <div class="profile-actions">
         <a href="{% url 'profile_edit' %}" class="btn-blue">Редактировать профиль</a>
@@ -31,35 +31,25 @@
         <span class="info-label">Почта</span>
         <span class="info-value">{{ user.email }}</span>
       </div>
-      <div class="info-row">
-        <span class="info-label">Дата рождения</span>
-        <span class="info-value">{{ profile.birth_date|date:"d.m.Y" }}</span>
-      </div>
-      <div class="info-row">
-        <span class="info-label">Возраст</span>
-        <span class="info-value">{{ profile.age }} лет</span>
-      </div>
+      {% if profile.organization or profile.school %}
       <div class="info-row">
         <span class="info-label">Учебное заведение</span>
-        <span class="info-value">{{ profile.school }}</span>
+        <span class="info-value">{{ profile.organization|default:profile.school }}</span>
       </div>
-      <div class="info-row">
-        <span class="info-label">Муниципалитет</span>
-        <span class="info-value">{{ profile.region }}</span>
-      </div>
-      {% if profile.role == 'teacher' %}
+      {% endif %}
+      {% if account_role == 'teacher' %}
       <div class="info-row">
         <span class="info-label">Должность</span>
         <span class="info-value">{{ profile.position|default:"—" }}</span>
       </div>
-      <div class="info-row">
-        <span class="info-label">Проведено уроков</span>
-        <span class="info-value">{{ reports_count }}</span>
-      </div>
+      <p><a href="{% url 'download_training' %}">Материалы для урока</a></p>
+      <p><a href="{% url 'pdd-teacher' %}">Мои отчёты ({{ reports_count }})</a></p>
+      {% elif account_role == 'admin' %}
+      <p><a href="{% url 'admin:index' %}">Админ-панель</a></p>
       {% endif %}
     </div>
 
-    {% if profile.role == 'child' %}
+    {% if account_role == 'child' %}
     <div class="profile-card">
       <h4>Последние результаты тестов</h4>
       {% if test_results %}

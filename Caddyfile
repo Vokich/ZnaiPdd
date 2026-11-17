@@ -1,6 +1,18 @@
 {$DJANGO_DOMAIN:xn--80aiajlwq.xn--p1ai} {
 	encode zstd gzip
 
+	handle /media/signs/* {
+		reverse_proxy web:8000
+	}
+
+	handle /media/news/* {
+		reverse_proxy web:8000
+	}
+
+	handle /media/practice/* {
+		reverse_proxy web:8000
+	}
+
 	handle_path /media/* {
 		root * /srv/media
 		header X-Content-Type-Options nosniff

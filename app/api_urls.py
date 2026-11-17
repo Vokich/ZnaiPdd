@@ -1,6 +1,6 @@
 from django.urls import path
 
-from . import api
+from . import api, news_api, practice_api, rating_api, route_api
 
 
 urlpatterns = [
@@ -8,6 +8,7 @@ urlpatterns = [
     path('session/', api.session, name='api_session'),
     path('users/', api.register, name='api_register'),
     path('municipalities/', api.municipalities, name='api_municipalities'),
+    path('organizations/', api.organizations, name='api_organizations'),
     path('profile/', api.profile, name='api_profile'),
     path('profile/password/', api.password, name='api_password'),
     path('tests/<slug:test_type>/', api.test, name='api_test'),
@@ -17,5 +18,17 @@ urlpatterns = [
     path('signs/<slug:slug>/', api.sign, name='api_sign'),
     path('signs/<slug:slug>/test/', api.sign_test, name='api_sign_test'),
     path('lesson-reports/', api.lesson_reports, name='api_lesson_reports'),
+    path('lesson-reports/options/', api.lesson_report_options, name='api_lesson_report_options'),
+    path('lesson-reports/<int:report_id>/', api.lesson_report, name='api_lesson_report'),
     path('training-material/', api.training_material, name='api_training_material'),
+    path('safe-route/', route_api.route_progress, name='api_route_progress'),
+    path('safe-route/<slug:attempt>/memento/', route_api.route_memento, name='api_route_memento'),
+    path('competition/', rating_api.competition, name='api_competition'),
+    path('rating/', rating_api.rating, name='api_rating'),
+    path('practice/', practice_api.exercises, name='api_practice'),
+    path('practice/history/', practice_api.practice_history, name='api_practice_history'),
+    path('practice/<slug:slug>/', practice_api.exercise, name='api_practice_exercise'),
+    path('news/', news_api.news_feed, name='api_news'),
+    path('news/next/', news_api.next_event, name='api_next_event'),
+    path('news/<slug:slug>/', news_api.news_post, name='api_news_post'),
 ]

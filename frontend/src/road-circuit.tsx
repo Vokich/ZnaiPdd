@@ -1,3 +1,4 @@
+import { useMotionSettings } from './motion-settings'
 import { useLayoutEffect, useRef } from 'react'
 import { Link } from './navigation'
 import './road-circuit.css'
@@ -188,8 +189,7 @@ export function RoadCircuit({ paused, toggle }: { paused: boolean; toggle: () =>
   return <section className="road-circuit" id="road-circuit" aria-labelledby="road-circuit-title">
     <div className="circuit-head">
       <div data-scroll-reveal="card">
-        <p className="circuit-kicker">ЗНАЙ ПДД <span /> ДОРОЖНЫЙ МАРШРУТ</p>
-        <h2 id="road-circuit-title">Дорога в<br /><em>движении.</em></h2>
+        <h1 id="road-circuit-title">Дорога в <em>движении</em></h1>
       </div>
       <div className="circuit-intro" data-scroll-reveal="quiet">
         <p>Листай карточки, узнавай знакомые ситуации и открывай каталог дорожных знаков.</p>
@@ -197,7 +197,7 @@ export function RoadCircuit({ paused, toggle }: { paused: boolean; toggle: () =>
       </div>
     </div>
     <div className="circuit-tools" data-scroll-reveal="quiet">
-      <p>01—06 <span /> Дорожные ситуации</p>
+      <p>Дорожные ситуации</p>
       <div className="circuit-controls" aria-label="Управление лентами">
         <button type="button" className="circuit-control" aria-label="Прокрутить карточки влево" aria-controls="circuit-lane" onClick={() => step(-1)}>←</button>
         <button type="button" className="circuit-control" aria-label="Прокрутить карточки вправо" aria-controls="circuit-lane" onClick={() => step(1)}>→</button>
@@ -207,8 +207,7 @@ export function RoadCircuit({ paused, toggle }: { paused: boolean; toggle: () =>
     <div className="circuit-lane" id="circuit-lane" ref={viewportRef}>
       <div className="circuit-track" ref={trackRef}>
         {[0, 1].map(copy => <ul className="circuit-run" ref={copy ? undefined : runRef} key={copy} aria-hidden={copy ? true : undefined}>
-          {signs.map(({ name, icon, tone }, index) => <li key={icon} className={`circuit-card circuit-${tone}`}>
-            <span className="circuit-index" aria-hidden="true">0{index + 1}</span>
+          {signs.map(({ name, icon, tone }) => <li key={icon} className={`circuit-card circuit-${tone}`}>
             <div className="circuit-glyph"><RoadGlyph icon={icon} /></div>
             <span className="circuit-card-title">{name}</span>
           </li>)}
@@ -223,4 +222,9 @@ export function RoadCircuit({ paused, toggle }: { paused: boolean; toggle: () =>
       </div>
     </div>
   </section>
+}
+
+export function RoadCircuitPage() {
+  const { enabled, toggle } = useMotionSettings()
+  return <div className="landing circuit-page" data-paused={enabled ? undefined : ''}><RoadCircuit paused={!enabled} toggle={toggle} /></div>
 }

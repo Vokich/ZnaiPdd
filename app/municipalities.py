@@ -29,14 +29,14 @@ def municipality_index():
             label = f"{label} ({row['code']})"
         region = tuple(sorted(search_words(row['region'])))
         regions.add(region)
-        index.append((label, region, search_words(row['name']), search_words(label) + (row['code'],)))
+        index.append((label, region, search_words(row['name']), search_words(label) + (row['code'],), row['code']))
 
     index.sort(key=lambda entry: entry[0].casefold().replace('ё', 'е'))
-    return index, regions, {entry[0] for entry in index}
+    return index, regions, {label: code for label, _, _, _, code in index}
 
 
-def is_municipality(value):
-    return value in municipality_index()[2]
+def municipality_codes():
+    return municipality_index()[2]
 
 
 def search_municipalities(query):
@@ -49,11 +49,11 @@ def search_municipalities(query):
     index, regions, _ = municipality_index()
     region = tuple(sorted(words))
     if region in regions:
-        return [label for label, key, _, _ in index if key == region], False
+        return [label for label, key, _, _, _ in index if key == region], False
 
     name_matches = []
     other_matches = []
-    for label, _, name, terms in index:
+    for label, _, name, terms, _ in index:
         if all(any(term.startswith(word) for term in name) for word in words):
             name_matches.append(label)
         elif all(any(term.startswith(word) for term in terms) for word in words):

@@ -10,16 +10,37 @@ x-superuser-env: &superuser-env
   DJANGO_SUPERUSER_USERNAME: ${DJANGO_SUPERUSER_USERNAME:-}
   DJANGO_SUPERUSER_PASSWORD: ${DJANGO_SUPERUSER_PASSWORD:-}
 
+x-postgres: &postgres
+  image: postgres:17-alpine
+  healthcheck:
+    test: [CMD, pg_isready, -U, znaipdd, -d, znaipdd]
+    interval: 5s
+    timeout: 3s
+    retries: 12
+
 services:
+  db-dev:
+    <<: *postgres
+    profiles: [dev]
+    environment:
+      POSTGRES_DB: znaipdd
+      POSTGRES_USER: znaipdd
+      POSTGRES_PASSWORD: znaipdd-dev
+    volumes:
+      - dev_postgres:/var/lib/postgresql/data
+
   api-dev:
     <<: *backend
     profiles: [dev]
+    depends_on:
+      db-dev:
+        condition: service_healthy
     environment:
       <<: *superuser-env
-      DJANGO_DB_PATH: /data/db.sqlite3
+      POSTGRES_HOST: db-dev
+      POSTGRES_PASSWORD: znaipdd-dev
     command: [sh, -ec, "python manage.py migrate --noinput && python manage.py bootstrap_admin && exec python manage.py runserver 0.0.0.0:8000"]
     volumes:
-      - dev_db:/data
       - dev_media:/app/media
     healthcheck:
       test: [CMD, python, -c, "from urllib.request import urlopen; urlopen('http://127.0.0.1:8000/api/health/', timeout=3)"]
@@ -72,23 +93,33 @@ services:
         - action: rebuild
           path: ./frontend/package-lock.json
 
+  db:
+    <<: *postgres
+    profiles: [prod]
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: znaipdd
+      POSTGRES_USER: znaipdd
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
   web:
     <<: *backend
     profiles: [prod]
     restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
     command: [sh, -ec, "python manage.py migrate --noinput && python manage.py bootstrap_admin && exec python -m uvicorn pdd_site.asgi:application --host 0.0.0.0 --port 8000 --no-proxy-headers"]
     environment:
       <<: *superuser-env
       DJANGO_SETTINGS_MODULE: pdd_site.settings_prod
       DJANGO_DOMAIN: ${DJANGO_DOMAIN:-xn--80aiajlwq.xn--p1ai}
       DJANGO_SECRET_KEY: ${DJANGO_SECRET_KEY:-}
-      DJANGO_DB_PATH: /data/db.sqlite3
+      POSTGRES_HOST: db
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-}
     volumes:
-      - type: bind
-        source: ${DJANGO_DATA_DIR:-/srv/znaipdd-data/db}
-        target: /data
-        bind:
-          create_host_path: false
       - type: bind
         source: ${DJANGO_MEDIA_DIR:-/srv/znaipdd-data/media}
         target: /app/media
@@ -136,7 +167,8 @@ services:
           create_host_path: false
 
 volumes:
-  dev_db:
+  dev_postgres:
   dev_media:
+  postgres_data:
   caddy_data:
   caddy_config:

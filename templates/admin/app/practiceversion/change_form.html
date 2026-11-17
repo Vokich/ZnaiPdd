@@ -1,0 +1,13 @@
+{% extends "admin/change_form.html" %}
+
+{% block object-tools-items %}
+  {{ block.super }}
+  {% if original.published_at and request.user.is_superuser %}
+    <li>
+      <form action="{% url 'admin:app_practiceversion_make_draft' original.pk %}" method="post">
+        {% csrf_token %}
+        <button type="submit" class="button">Создать черновик для правки</button>
+      </form>
+    </li>
+  {% endif %}
+{% endblock %}

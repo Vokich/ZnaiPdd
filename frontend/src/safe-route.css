@@ -1,0 +1,84 @@
+.safe-route, .route-board, .route-stage, .route-options { display: grid; gap: 14px; min-width: 0; }
+.route-controls p { margin-top: 8px; color: var(--muted); }
+.route-controls form { display: flex; flex-wrap: wrap; align-items: end; gap: 10px; }
+.route-controls form .field { flex: 0 1 300px; min-width: min(100%, 180px); }
+.route-controls > .button { margin-top: 10px; }
+.route-rating { align-self: end; padding-block: 12px; }
+.route-game {
+  display: grid; gap: 16px; grid-template-columns: minmax(0, 1.13fr) minmax(0, 1fr);
+  grid-template-areas: 'street task' 'map task'; grid-template-rows: min-content 1fr; align-items: start;
+}
+.route-board { grid-area: street; scroll-margin-top: 16px; padding: 0; gap: 0; overflow: hidden; }
+.route-stage { grid-area: task; }
+.route-overview { grid-area: map; min-width: 0; background: #f8f9e9; padding: 0; overflow: hidden; }
+.route-board h2, .route-stage h2, .route-board p, .route-stage p { margin: 0; }
+.route-board-title { display: flex; justify-content: space-between; align-items: center; gap: 8px; padding: 13px 18px; }
+.route-board-title .button { min-height: 36px; padding: 6px 11px; font-size: 13px; background: var(--paper); }
+.route-board-title .button:hover { background: var(--blue); }
+.route-street { display: block; width: 100%; height: auto; aspect-ratio: 720 / 350; background: #cee1af; }
+.route-map summary { padding: 12px 17px; cursor: pointer; font-weight: 650; background: #e5efd5; }
+.route-map .route-trail { margin: 0; padding: 8px 16px 14px; line-height: 1.45; font-size: .84rem; }
+.district {
+  position: relative;
+  aspect-ratio: 2.4;
+  margin: 12px;
+  border-radius: 14px;
+  background: radial-gradient(ellipse at 28% 24%, #e2ebd1 0 17%, transparent 18%), radial-gradient(ellipse at 70% 80%, #e2ebd1 0 15%, transparent 16%), #f8f9e9;
+}
+.district-building { position: absolute; width: 21px; height: 19px; border-radius: 2px; background: repeating-linear-gradient(90deg, transparent 0 4px, #c39e91 4px 6px, transparent 6px 9px), #f8ddb6; border-top: 5px solid var(--blue); translate: -50% -155%; }
+.district-lines { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
+.district-edge, .district-walked { fill: none; vector-effect: non-scaling-stroke; stroke-linecap: round; }
+.district-edge { stroke: #86a9d0; stroke-width: 2; stroke-dasharray: 4 5; }
+.district-walked { stroke: #2e5aa7; stroke-width: 4; stroke-linejoin: round; }
+.district-drawing { vector-effect: none; stroke-width: 1.45; }
+.district-point {
+  width: clamp(8px, 1.15vw, 16px); height: clamp(8px, 1.15vw, 16px);
+  position: absolute; transform: translate(-50%, -50%);
+  border-radius: 50%; border: 2px solid #385874; background: #f8faf2;
+}
+.district-point.visited { background: #386398; }
+.district-point:first-of-type, .district-point:last-of-type { border-radius: 28%; }
+.district-label {
+  position: absolute; top: 14px; left: 50%; transform: translateX(-50%);
+  color: #20354e; font-size: clamp(.64rem, 1.3vw, .84rem); font-weight: 650; white-space: nowrap;
+}
+.district-player {
+  position: absolute; width: 20px; height: 23px; transform: translate(-50%, -82%);
+  background: #fff3cf; border: 1px solid #ae713a; border-radius: 8px;
+  transition: left 1100ms var(--ease-out), top 1100ms var(--ease-out);
+}
+.district-player i { position: absolute; width: 7px; height: 9px; top: 7px; left: 6px; background: #a95325; border-radius: 3px; }
+.district-player i::before { content: ''; position: absolute; top: -5px; left: 1px; width: 5px; height: 5px; background: #633e2d; border-radius: 50%; }
+.district-player i::after { content: ''; position: absolute; top: 8px; height: 4px; width: 9px; left: -1px; border-inline: 2px solid #405574; }
+.district-player.walking i { animation: route-steps 170ms alternate infinite ease-in-out; }
+.district-arrival { position: absolute; inset: -4px; border: 2px solid var(--blue); border-radius: 50%; pointer-events: none; }
+@keyframes route-steps { from { transform: rotate(-13deg); } to { transform: rotate(13deg); } }
+.route-totals { display: flex; align-items: center; justify-content: space-between; gap: 8px; font-size: 14px; }
+.route-totals strong.negative { color: #a53e29; }
+.route-progress { display: grid; gap: 6px; font-size: 13px; font-weight: 620; }
+.route-progress-steps { display: flex; flex-wrap: wrap; gap: 3px; }
+.route-progress-steps span { width: 24px; height: 7px; border-radius: 6px; background: #d7e4f6; }
+.route-progress-steps span[data-solved='true'] { background: var(--blue); }
+.route-stage h2 { font-size: clamp(25px, 3vw, 44px); letter-spacing: -.065em; }
+.route-correct, .route-review { padding: 12px; border-radius: 10px; color: #174b38; background: #e8f2d7; line-height: 1.5; }
+.route-review { display: grid; gap: 8px; color: #652f22; background: #ffebdf; }
+.route-review form { display: grid; justify-items: start; gap: 7px; }
+.route-correct a, .route-review a { text-decoration: underline; }
+.route-options .button { justify-content: space-between; text-align: start; white-space: normal; width: 100%; background: #f7f3fc; border-color: #e5dced; border-radius: 12px; padding: 11px 13px; }
+.route-options .button:hover { background: var(--blue); }
+.route-options .button > span { color: var(--blue); }
+.route-options .button:hover > span { color: inherit; }
+.route-options:empty { display: none; }
+.route-guide { display: flex; align-items: center; gap: 14px; padding: 13px 18px; background: #fff4dc; }
+.route-guide .mascot { flex: 0 0 clamp(45px, 6vw, 74px); }
+.route-guide button { padding: 6px 0 0; border: 0; color: var(--blue); background: transparent; text-align: start; }
+.route-guide .route-hint { margin-top: 6px; padding: 9px 11px; border-inline-start: 3px solid var(--blue); border-radius: 5px 10px 10px 5px; background: var(--paper); }
+@media (max-width: 760px) {
+  .route-game { grid-template-columns: minmax(0, 1fr); grid-template-areas: 'street' 'task' 'map'; grid-template-rows: none; }
+  .route-controls form { display: grid; align-items: start; }
+  .route-rating { justify-self: start; padding-block: 3px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .district-player { transition: none; }
+  .district-player.walking i { animation: none; }
+}

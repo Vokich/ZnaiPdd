@@ -5,18 +5,18 @@ from random import shuffle
 from django.contrib.auth import authenticate, login, logout, update_session_auth_hash
 from django.contrib.auth.models import User
 from django.db import IntegrityError, transaction
-from django.db.models import F
+from django.db.models import Case, F, Value, When
 from django.forms import DateField
 from django.http import FileResponse
 from django.shortcuts import get_object_or_404
-from django.utils import timezone
 from django.views.decorators.cache import never_cache
 from django.views.decorators.csrf import ensure_csrf_cookie
 from rest_framework.decorators import api_view, permission_classes
-from rest_framework.exceptions import NotFound, ValidationError
+from rest_framework.exceptions import NotFound, PermissionDenied, ValidationError
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
+from .access import account_role, can_submit_lesson_reports, is_child
 from .certificate_generator import CertificateGenerator
 from .forms import (
     AdultPddTestForm,
@@ -28,9 +28,13 @@ from .forms import (
     UserProfileForm,
     UserRegistrationForm,
 )
-from .models import Certificate, Profile, RoadSign, TestResult, UserSignProgress
+from .models import Certificate, Organization, RoadSign, TeacherLessonReport, TestResult
 from .municipalities import search_municipalities
-from .views import download_training_file, is_child, is_teacher
+from .practice import exercise_card, public_exercises, related_exercises
+from .rating import rating_overview
+from .route_levels import LEVELS
+from .sign_catalog import catalog_signs, learned_sign_ids, mark_sign_learned, published_signs
+from .views import download_training_file
 
 
 TEST_FORMS = {
@@ -38,7 +42,6 @@ TEST_FORMS = {
     TestResult.TestType.TEEN: TeenPddTestForm,
     TestResult.TestType.ADULT: AdultPddTestForm,
 }
-PROFILE_FIELDS = ('surname1', 'name', 'surname2', 'school', 'birth_date', 'region', 'position')
 PASSING_SCORE = 18
 DIPLOMA_SCORE = 24
 
@@ -50,18 +53,27 @@ def user_data(user):
     return {
         'id': user.pk,
         'username': user.username,
-        'name': profile.name if profile else user.username,
-        'role': profile.role if profile else None,
+        'name': (profile.name or user.username) if profile else user.username,
+        'role': account_role(user),
+        'can_submit_reports': can_submit_lesson_reports(user),
     }
 
 
 def profile_data(user):
-    profile = get_object_or_404(Profile, user=user)
+    profile = getattr(user, 'profile', None)
+    organization = profile.organization if profile else None
+    municipality = profile.municipality if profile else None
     return {
         **user_data(user),
-        **{field: getattr(profile, field) for field in PROFILE_FIELDS},
+        'surname1': profile.surname1 if profile else '',
+        'name': profile.name if profile else '',
+        'surname2': profile.surname2 if profile else '',
+        'school': profile.school if profile else '',
+        'region': municipality.name if municipality else (profile.region if profile else ''),
+        'position': profile.position if profile else '',
+        'organization': organization_data(organization) if organization else None,
+        'competition_enabled': profile.competition_enabled if profile else False,
         'email': user.email,
-        'age': profile.age,
     }
 
 
@@ -112,9 +124,17 @@ def report_data(report):
         'id': report.pk,
         'lesson_date': report.lesson_date,
         'location': report.location,
-        'children_count': report.children_count,
-        'photo_link': report.photo_link,
+        'participants_count': report.participants_count,
+        'route_level': report.route_level,
+        'practice': {'id': report.practice_id, 'title': report.practice.title, 'slug': report.practice.slug}
+                     if report.practice else None,
+        'completed_count': report.completed_count,
+        'organization': organization_data(report.organization) if report.organization else None,
     }
+
+
+def organization_data(organization):
+    return {'id': organization.pk, 'name': organization.name, 'municipality': organization.municipality.name}
 
 
 def sign_data(sign, unlocked):
@@ -123,10 +143,14 @@ def sign_data(sign, unlocked):
         'category': sign.category,
         'category_label': sign.get_category_display(),
         'unlocked': unlocked,
-        'name': sign.name if unlocked else None,
-        'image': sign.image.url if unlocked and sign.image else None,
-        'description': (sign.full_description or sign.short_description) if unlocked else None,
-        'fun_fact': sign.fun_fact if unlocked else None,
+        'number': sign.number,
+        'name': sign.name,
+        'image': sign.image_url,
+        'description': sign.full_description or sign.short_description,
+        'fun_fact': sign.fun_fact,
+        'source_url': sign.source_url,
+        'image_credit': sign.image_credit,
+        'has_test': sign.has_test,
     }
 
 
@@ -160,8 +184,7 @@ def register(request):
         raise ValidationError({'consent': ['Подтвердите согласие на обработку персональных данных.']})
     form = checked(UserRegistrationForm(data))
     try:
-        with transaction.atomic():
-            user = form.save()
+        user = form.save()
     except IntegrityError:
         if User.objects.filter(username=form.cleaned_data['username']).exists():
             raise ValidationError({'username': ['Пользователь с таким логином уже существует.']})
@@ -176,29 +199,48 @@ def municipalities(request):
     return Response({'results': results, 'more': more})
 
 
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def organizations(request):
+    query = request.query_params.get('q', '').strip()
+    if not 2 <= len(query) <= 300:
+        return Response([])
+    organizations = Organization.objects.filter(name__icontains=query).select_related('municipality')[:30]
+    return Response([organization_data(organization) for organization in organizations])
+
+
 @never_cache
 @api_view(['GET', 'PATCH'])
 @permission_classes([IsAuthenticated])
 def profile(request):
+    user = request.user
     if request.method == 'PATCH':
         data = object_data(request)
-        current = get_object_or_404(Profile, user=request.user)
-        fields = {field: getattr(current, field) for field in PROFILE_FIELDS}
-        fields.update(username=request.user.username, email=request.user.email)
-        fields.update({key: data[key] for key in fields if key in data})
-        form = checked(UserProfileForm(fields, instance=request.user, profile_instance=current))
         try:
             with transaction.atomic():
-                form.save()
+                user = User.objects.select_for_update().get(pk=user.pk)
+                current = getattr(user, 'profile', None)
+                form = UserProfileForm(instance=user, profile_instance=current)
+                fields = {
+                    name: data.get(name, field.prepare_value(form.initial.get(name)))
+                    for name, field in form.fields.items()
+                }
+                user = checked(UserProfileForm(fields, instance=user, profile_instance=current)).save()
         except IntegrityError:
-            if User.objects.exclude(pk=request.user.pk).filter(username=form.cleaned_data['username']).exists():
+            if User.objects.exclude(pk=request.user.pk).filter(username=fields['username']).exists():
                 raise ValidationError({'username': ['Пользователь с таким логином уже существует.']})
             raise
-    user = request.user
+    data = profile_data(user)
+    suggestions = public_exercises().select_related('published_version').order_by(
+        Case(When(slug='cross-on-green', then=Value(0)), When(slug='stop-calendar', then=Value(1)), default=Value(2)),
+        'title',
+    )[:2]
     return Response({
-        'profile': profile_data(user),
+        'profile': data,
         'results': [result_data(result) for result in user.test_results.all()] if is_child(user) else [],
-        'reports_count': user.lesson_reports.count() if is_teacher(user) else 0,
+        'reports_count': user.lesson_reports.count() if data['can_submit_reports'] else 0,
+        'rating': rating_overview(user.pk),
+        'suggested_practice': [exercise_card(exercise) for exercise in suggestions],
     })
 
 
@@ -287,14 +329,11 @@ def certificate(request, test_type):
 @never_cache
 @api_view(['GET'])
 def signs(request):
-    category = request.query_params.get('category')
-    signs = RoadSign.objects.filter(category=category) if category else RoadSign.objects.all()
-    unlocked_ids = set()
-    if request.user.is_authenticated:
-        unlocked_ids = set(request.user.sign_progress.filter(unlocked=True).values_list('sign_id', flat=True))
+    signs = catalog_signs(request.query_params.get('category', ''), request.query_params.get('q', ''))
+    unlocked_ids = learned_sign_ids(request.user)
     return Response({
         'categories': [{'value': value, 'label': label} for value, label in RoadSign.Category.choices],
-        'total': RoadSign.objects.count(),
+        'total': published_signs().count(),
         'unlocked_count': len(unlocked_ids),
         'signs': [sign_data(sign, sign.pk in unlocked_ids) for sign in signs],
     })
@@ -302,18 +341,22 @@ def signs(request):
 
 @never_cache
 @api_view(['GET'])
-@permission_classes([IsAuthenticated])
 def sign(request, slug):
-    sign = get_object_or_404(RoadSign, slug=slug)
-    unlocked = request.user.sign_progress.filter(sign=sign, unlocked=True).exists()
-    return Response(sign_data(sign, unlocked))
+    sign = get_object_or_404(published_signs(), slug=slug)
+    unlocked = request.user.is_authenticated and request.user.sign_progress.filter(sign=sign, unlocked=True).exists()
+    return Response({
+        **sign_data(sign, unlocked),
+        'exercises': list(related_exercises(sign).values('slug', 'title')),
+    })
 
 
 @never_cache
 @api_view(['GET', 'POST'])
 @permission_classes([IsAuthenticated])
 def sign_test(request, slug):
-    sign = get_object_or_404(RoadSign, slug=slug)
+    sign = get_object_or_404(published_signs(), slug=slug)
+    if not sign.has_test:
+        raise NotFound('Для этого знака пока нет мини-теста.')
     if request.user.sign_progress.filter(sign=sign, unlocked=True).exists():
         return Response({'unlocked': True})
     if request.method == 'GET':
@@ -325,25 +368,58 @@ def sign_test(request, slug):
         raise ValidationError({'answer': ['Выберите вариант ответа.']})
     if answer != sign.correct_answer:
         raise ValidationError({'answer': ['Неверный ответ. Попробуйте ещё раз.']})
-    progress, _ = UserSignProgress.objects.get_or_create(user=request.user, sign=sign)
-    UserSignProgress.objects.filter(pk=progress.pk, unlocked=False).update(
-        unlocked=True, test_passed_at=timezone.now(),
-    )
+    mark_sign_learned(request.user, sign)
     return Response({'unlocked': True})
+
+
+def require_report_access(user):
+    if not can_submit_lesson_reports(user):
+        raise PermissionDenied('Право на отчёты выдаёт администратор после проверки учётной записи.')
+
+
+@never_cache
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def lesson_report_options(request):
+    require_report_access(request.user)
+    routes = [{'id': key, 'title': level['title']} for key, level in LEVELS.items()]
+    if request.query_params.get('include') == 'practice':
+        return Response({'routes': routes, 'practice': list(public_exercises().values('id', 'slug', 'title'))})
+    return Response(routes)
 
 
 @never_cache
 @api_view(['GET', 'POST'])
 @permission_classes([IsAuthenticated])
 def lesson_reports(request):
-    if not is_teacher(request.user):
-        return Response({'detail': 'Отчёты доступны педагогам.'}, status=403)
+    require_report_access(request.user)
     if request.method == 'GET':
-        return Response([report_data(report) for report in request.user.lesson_reports.all()])
+        reports = request.user.lesson_reports.select_related('organization__municipality', 'practice')
+        return Response([report_data(report) for report in reports])
     report = checked(TeacherLessonReportForm(object_data(request))).save(commit=False)
     report.user = request.user
     report.save()
     return Response(report_data(report), status=201)
+
+
+@never_cache
+@api_view(['GET', 'PATCH'])
+@permission_classes([IsAuthenticated])
+def lesson_report(request, report_id):
+    require_report_access(request.user)
+    reports = request.user.lesson_reports.select_related('organization__municipality', 'practice')
+    if request.method == 'GET':
+        return Response(report_data(get_object_or_404(reports, pk=report_id)))
+    data = object_data(request).copy()
+    with transaction.atomic():
+        report = get_object_or_404(TeacherLessonReport.objects.select_for_update(), user=request.user, pk=report_id)
+        for field in ('lesson_date', 'location', 'participants_count', 'route_level'):
+            data.setdefault(field, getattr(report, field))
+        data.setdefault('practice', report.practice_id)
+        data.setdefault('completed_count', report.completed_count if data['route_level'] or data['practice'] else None)
+        data.setdefault('organization', report.organization_id)
+        report = checked(TeacherLessonReportForm(data, instance=report)).save()
+    return Response(report_data(report))
 
 
 @api_view(['GET'])

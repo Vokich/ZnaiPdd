@@ -2,10 +2,43 @@ import { useEffect, useId, useRef, useState } from 'react'
 import type { ComponentProps, ReactNode } from 'react'
 import { Link, NavLink, useNavigate } from './navigation'
 import { api, ApiError } from './api'
+import type { GalleryImage, Organization } from './api'
 import { useSession } from './state'
+import { useMotionSettings } from './motion-settings'
+import * as Switch from '@radix-ui/react-switch'
+import * as m from 'motion/react-m'
+import { spring } from './motion-ui'
 
 export function ButtonLink({ to, children, light = false }: { to: string; children: ReactNode; light?: boolean }) {
   return <Link className={light ? 'button button-light' : 'button'} to={to}>{children}</Link>
+}
+
+function Wordmark() {
+  return <Link className="wordmark" to="/" aria-label="Знай ПДД — главная">
+    <span className="brand-mark" aria-hidden="true"><i /><i /><i /></span>знай пдд
+  </Link>
+}
+
+function MotionToggle() {
+  const { enabled, reduced, toggle } = useMotionSettings()
+  return <Switch.Root checked={enabled} disabled={reduced} onCheckedChange={toggle} className="site-motion-toggle"
+    aria-label="Анимация на сайте" title={reduced ? 'Движение ограничено настройками устройства' : undefined}>
+    <Switch.Thumb className="motion-switch-track" asChild>
+      <m.span><m.i animate={{ x: enabled ? 9 : 0 }} transition={enabled ? spring : { duration: 0 }} /></m.span>
+    </Switch.Thumb>
+    <span>Движение <span>{enabled ? 'вкл.' : 'выкл.'}</span></span>
+  </Switch.Root>
+}
+
+function HeaderLink({ to, children, onClick }: { to: string; children: ReactNode; onClick: () => void }) {
+  const { enabled } = useMotionSettings()
+  return <NavLink className="motion-header-link" to={to} onClick={onClick}>
+    {({ isActive }) => <>
+      {isActive && <m.span aria-hidden="true" className="header-active" layoutId={enabled ? 'header-active' : undefined}
+        transition={enabled ? spring : { duration: 0 }} />}
+      {children}
+    </>}
+  </NavLink>
 }
 
 export function Header({ kind }: { kind: 'home' | 'auth' | 'portal' }) {
@@ -46,18 +79,37 @@ export function Header({ kind }: { kind: 'home' | 'auth' | 'portal' }) {
   }
   return <header ref={header} className={`site-header header-${kind}`}>
     <div className="header-inner">
-      <Link className="wordmark" to="/" aria-label="Знай ПДД — главная">{kind === 'auth' && <span aria-hidden="true">→</span>}знай пдд</Link>
-      {kind === 'home' && <a className="about-link" href="#audience">Для кого этот сайт</a>}
-      {kind === 'portal' && user ? <>
-        <button ref={menuToggle} className="button button-light menu-toggle" type="button" aria-expanded={menu} aria-controls="portal-navigation" onClick={() => setMenu(!menu)}>{menu ? 'Закрыть' : 'Меню'}</button>
+      <Wordmark />
+      {kind !== 'auth' && <>
         <nav id="portal-navigation" className={menu ? 'portal-nav open' : 'portal-nav'} aria-label="Разделы портала">
-          <NavLink to="/profile/" onClick={() => setMenu(false)}>Кабинет</NavLink>
-          {user.role === 'child' && <NavLink to="/age/" onClick={() => setMenu(false)}>Тесты</NavLink>}
-          <NavLink to="/signs/" onClick={() => setMenu(false)}>Знаки ПДД</NavLink>
-          {user.role === 'teacher' && <NavLink to="/pdd-teacher/" onClick={() => setMenu(false)}>Отчёты</NavLink>}
-          <button className="button button-light" type="button" disabled={signingOut} onClick={signOut}>Выйти</button>
+          {kind === 'home' ? <>
+            <a href="#project" onClick={() => setMenu(false)}>О проекте</a>
+            <a href="#shtrikh" onClick={() => setMenu(false)}>Штрих</a>
+            <a href="#audience" onClick={() => setMenu(false)}>Для кого</a>
+          </> : <>
+            <HeaderLink to="/profile/" onClick={() => setMenu(false)}>Кабинет</HeaderLink>
+            <HeaderLink to="/signs/" onClick={() => setMenu(false)}>Знаки ПДД</HeaderLink>
+            <HeaderLink to="/practice/" onClick={() => setMenu(false)}>Практика</HeaderLink>
+            <HeaderLink to="/safe-route/" onClick={() => setMenu(false)}>Маршрут</HeaderLink>
+          </>}
+          <HeaderLink to="/news/" onClick={() => setMenu(false)}>Новости</HeaderLink>
+          {kind === 'portal' && <>
+            <HeaderLink to="/rating/" onClick={() => setMenu(false)}>Рейтинг</HeaderLink>
+            {user?.role === 'child' && <HeaderLink to="/age/" onClick={() => setMenu(false)}>Тесты</HeaderLink>}
+            {user?.role === 'teacher' && <HeaderLink to="/pdd-teacher/" onClick={() => setMenu(false)}>Отчёты</HeaderLink>}
+            {user && <button className="button button-light mobile-signout" type="button" disabled={signingOut} onClick={signOut}>Выйти</button>}
+          </>}
         </nav>
-      </> : <ButtonLink to={user ? '/profile/' : '/login/'}>{user ? 'Мой кабинет' : kind === 'home' ? 'Войти →' : 'Войти'}</ButtonLink>}
+      </>}
+      <div className="header-actions">
+        {kind === 'portal' ? <>
+          <MotionToggle />
+          {user && <button className="button button-light signout" type="button" disabled={signingOut} onClick={signOut}>Выйти</button>}
+        </> : <ButtonLink to={user ? '/profile/' : '/login/'}>{user ? 'В кабинет' : 'Войти'} <span aria-hidden="true">→</span></ButtonLink>}
+        {kind !== 'auth' && <button ref={menuToggle} className="button button-light menu-toggle" type="button"
+          aria-label={menu ? 'Закрыть меню' : 'Открыть меню'} aria-expanded={menu} aria-controls="portal-navigation"
+          onClick={() => setMenu(!menu)}><span aria-hidden="true">{menu ? '×' : '≡'}</span></button>}
+      </div>
     </div>
     <Feedback error={error} />
   </header>
@@ -66,13 +118,34 @@ export function Header({ kind }: { kind: 'home' | 'auth' | 'portal' }) {
 export function Footer() {
   return <footer className="site-footer">
     <div className="footer-inner" data-scroll-reveal="quiet">
-      <Link className="wordmark" to="/">знай пдд</Link>
-      <nav aria-label="Социальные сети">
-        <a href="https://vk.ru/media_uid_lo" target="_blank" rel="noreferrer">VK Медиа ЮИД →</a>
-        <a href="https://vk.ru/lab48" target="_blank" rel="noreferrer">VK Лаборатория 48 →</a>
-      </nav>
+      <Wordmark />
+      <div className="footer-links">
+        <nav aria-label="Социальные сети">
+          <a href="https://vk.ru/media_uid_lo" target="_blank" rel="noreferrer">Медиа ЮИД ↗</a>
+          <a href="https://vk.ru/lab48" target="_blank" rel="noreferrer">Лаборатория 48 ↗</a>
+        </nav>
+        <MotionToggle />
+      </div>
     </div>
   </footer>
+}
+
+export function PracticeIcon({ kind }: { kind: string }) {
+  return kind === 'plates' ? <span className="stop-icon" aria-hidden="true" />
+    : <img className="practice-icon" src="/art/practice.webp" width="114" height="73" alt="" />
+}
+
+export function MediaGallery({ images }: { images?: GalleryImage[] }) {
+  if (!images?.length) return null
+  return <div className="media-gallery">
+    {images.map(image => <figure key={image.id}>
+      <a href={image.url} target="_blank" rel="noopener noreferrer"
+        aria-label={['Открыть изображение в новой вкладке', image.alt || image.caption].filter(Boolean).join('. ')}>
+        <img src={image.url} alt={image.alt} loading="lazy" />
+      </a>
+      {image.caption && <figcaption>{image.caption}</figcaption>}
+    </figure>)}
+  </div>
 }
 
 export function Character({ role, className = '' }: { role: 'student' | 'teacher'; className?: string }) {
@@ -82,7 +155,11 @@ export function Character({ role, className = '' }: { role: 'student' | 'teacher
 export function Feedback({ error }: { error?: unknown }) {
   if (!error) return null
   const message = error instanceof Error ? error.message : 'Возникла ошибка. Попробуйте ещё раз.'
-  return <p className="feedback" role="alert">{message}</p>
+  const formErrors = error instanceof ApiError ? error.fields.__all__ : undefined
+  if (error instanceof ApiError && error.fields.code === 'not_authenticated') {
+    return <p className="feedback" role="alert">Время сеанса истекло. <Link to="/login/">Войдите снова</Link>.</p>
+  }
+  return <p className="feedback" role="alert">{formErrors ? [formErrors].flat().join(' ') : message}</p>
 }
 
 export function FieldErrors({ error, name }: { error?: unknown; name: string }) {
@@ -106,64 +183,47 @@ export function Field({ name, label, error, wide, ...input }: FieldProps) {
   </label>
 }
 
-export function Municipality({ value = '', error }: { value?: string; error?: unknown }) {
+export function OrganizationField({ value, error }: { value?: Organization | null; error?: unknown }) {
   const id = useId()
-  const [query, setQuery] = useState(value)
-  const [open, setOpen] = useState(false)
-  const [matches, setMatches] = useState<{ results: string[]; more: boolean }>()
+  const [selected, setSelected] = useState(value ?? null)
+  const [query, setQuery] = useState('')
+  const [matches, setMatches] = useState<Organization[]>()
   const [searchFailed, setSearchFailed] = useState(false)
-  const [active, setActive] = useState(-1)
-  const invalid = error instanceof ApiError && Boolean(error.fields.region)
+  const searching = query.trim().length >= 2
 
   useEffect(() => {
-    if (!open || query.trim().length < 2) return
+    if (!searching) return
     const controller = new AbortController()
     const timer = window.setTimeout(() => {
-      api<{ results: string[]; more: boolean }>('municipalities/?q=' + encodeURIComponent(query), { signal: controller.signal })
+      api<Organization[]>('organizations/?q=' + encodeURIComponent(query.trim()), { signal: controller.signal })
         .then(setMatches)
         .catch(() => { if (!controller.signal.aborted) setSearchFailed(true) })
     }, 180)
     return () => { window.clearTimeout(timer); controller.abort() }
-  }, [query, open])
+  }, [query, searching])
 
-  function choose(municipality: string) {
-    setQuery(municipality)
-    setOpen(false)
-    setActive(-1)
-  }
-  const options = matches?.results ?? []
-  const expanded = open && query.trim().length >= 2
-  return <div className="field municipality">
-    <label htmlFor={id}>Муниципалитет</label>
-    <input id={id} name="region" role="combobox" autoComplete="off" required maxLength={400}
-      placeholder="Введите муниципалитет" value={query} aria-expanded={expanded} aria-controls={id + '-options'}
-      aria-autocomplete="list" aria-invalid={invalid || undefined}
-      aria-describedby={invalid ? 'region-error' : undefined}
-      aria-activedescendant={expanded && active >= 0 ? id + '-' + active : undefined}
-      onFocus={() => setOpen(true)} onBlur={() => setOpen(false)}
-      onChange={event => { setQuery(event.target.value); setOpen(true); setMatches(undefined); setSearchFailed(false); setActive(-1) }}
-      onKeyDown={event => {
-        if (event.key === 'Escape') { setOpen(false); return }
-        if (event.key === 'ArrowDown' || event.key === 'ArrowUp') {
-          event.preventDefault()
-          setOpen(true)
-          if (!options.length) return
-          const index = event.key === 'ArrowDown' ? (active + 1) % options.length : (active < 0 ? options.length - 1 : (active - 1 + options.length) % options.length)
-          setActive(index)
-          document.getElementById(id + '-' + index)?.scrollIntoView({ block: 'nearest', behavior: 'instant' })
-        }
-        if (event.key === 'Enter' && expanded && options[active]) { event.preventDefault(); choose(options[active]) }
-      }} />
-    <FieldErrors error={error} name="region" />
-    <div inert={!expanded} aria-hidden={!expanded} className={expanded ? 'municipality-menu open' : 'municipality-menu'}>
-      <div role="listbox" id={id + '-options'} aria-label="Найденные муниципалитеты">
-        {options.map((option, index) => <div id={id + '-' + index} key={option} role="option" aria-selected={active === index}
-          onMouseDown={event => event.preventDefault()} onClick={() => choose(option)}>{option}</div>)}
-      </div>
-      <span className="municipality-status" role="status">
-        {searchFailed ? 'Поиск недоступен. Попробуйте ещё раз.' : !matches ? 'Ищем…' : !options.length ? 'Ничего не найдено.' : matches.more ? 'Уточните название для поиска.' : ''}
-      </span>
-    </div>
+  return <div className="field wide">
+    <input type="hidden" name="organization" value={selected?.id ?? ''} />
+    <label htmlFor={id}>Организация (необязательно)</label>
+    {selected ? <div className="actions">
+      <span>{selected.name}, {selected.municipality}</span>
+      <button className="text-link" type="button" onClick={() => setSelected(null)}>Снять выбор</button>
+    </div> : <>
+      <input id={id} value={query} autoComplete="off" maxLength={300} placeholder="Введите название организации"
+        onChange={event => { setQuery(event.target.value); setMatches(undefined); setSearchFailed(false) }}
+        onKeyDown={event => { if (event.key === 'Enter') event.preventDefault() }} />
+      {searching && <div>
+        <span role="status">{searchFailed ? 'Поиск временно недоступен.' : !matches ? 'Ищем…' : !matches.length ? 'Ничего не найдено.' : ''}</span>
+        {matches && matches.length > 0 && <ul className="organization-results">
+          {matches.map(organization => <li key={organization.id}>
+            <button className="text-link" type="button" onClick={() => { setSelected(organization); setQuery('') }}>
+              {organization.name}, {organization.municipality}
+            </button>
+          </li>)}
+        </ul>}
+      </div>}
+    </>}
+    <FieldErrors error={error} name="organization" />
   </div>
 }
 

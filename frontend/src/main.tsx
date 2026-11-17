@@ -1,18 +1,17 @@
 import { StrictMode, useEffect, useRef, useState } from 'react'
-import type { ReactNode, RefObject } from 'react'
+import type { ComponentType, ReactNode, RefObject } from 'react'
 import { createRoot } from 'react-dom/client'
 import { createBrowserRouter, Navigate, Outlet, RouterProvider, ScrollRestoration, useLocation, useNavigation, useNavigationType, useViewTransitionState } from 'react-router-dom'
 import '@fontsource-variable/golos-text'
 import './styles.css'
-import './landing-motion.css'
 import { loadResource, SessionProvider, useSession } from './state'
 import type { Role } from './api'
 import { ButtonLink, Footer, Header, Loading, LoadError, PortalHeading } from './ui'
-import { HomePage, LoginPage, RegisterPage } from './public-pages'
-import { AccountPage, EditProfilePage, PasswordPage, TeacherPage } from './account-pages'
-import { QuizPage, QuizzesPage, ResultPage, quizInfo } from './quiz-pages'
-import { SignDetailPage, SignsHomePage, SignsListPage, SignTestPage } from './sign-pages'
+import { LoginPage, RegisterPage } from './public-pages'
+import { HomePage } from './landing'
+import { quizInfo } from './quiz-info'
 import { useViewportMotion } from './viewport-motion'
+import { MotionProvider, useMotionSettings } from './motion-settings'
 import privacyText from './privacy.html?raw'
 
 function Gate({ children, role }: { children: ReactNode; role?: Role }) {
@@ -55,10 +54,12 @@ function App() {
   const site = useRef<HTMLDivElement>(null)
   const main = useRef<HTMLElement>(null)
   const previousPath = useRef(pathname)
+  const isBack = navigation === 'POP' || pathname.length < previousPath.current.length && previousPath.current.startsWith(pathname)
   const home = pathname === '/'
   const auth = /^\/(login|reg)\/?$/.test(pathname)
   const kind = home ? 'home' : auth ? 'auth' : 'portal'
-  useViewportMotion(site, pathname)
+  const { enabled } = useMotionSettings()
+  useViewportMotion(site, pathname, enabled)
 
   useEffect(() => {
     const changed = previousPath.current !== pathname
@@ -68,7 +69,7 @@ function App() {
     document.title = title && !home ? title + ' — Знай ПДД' : 'Знай ПДД'
   }, [pathname, home, navigation])
 
-  return <div ref={site} className={`site site-${kind}`}>
+  return <div ref={site} className={`site site-${kind}`} data-motion={enabled ? 'on' : 'off'} data-direction={isBack ? 'back' : 'forward'}>
     <a className="skip-link" href="#main">К содержанию</a>
     {pending && <div className="navigation-progress" aria-hidden="true" />}
     <Header kind={kind} />
@@ -78,34 +79,75 @@ function App() {
   </div>
 }
 
+const account = () => import('./account-pages')
+const quizzes = () => import('./quiz-pages')
+const signs = () => import('./sign-pages')
+const practice = () => import('./practice-pages')
+const news = () => import('./news-pages')
+
+function lazyPage(load: () => Promise<ComponentType>, gate?: true | Role) {
+  return async () => {
+    const Component = await load()
+    return { element: gate ? <Gate role={gate === true ? undefined : gate}><Component /></Gate> : <Component /> }
+  }
+}
+
 const router = createBrowserRouter([{
   element: <App />,
   hydrateFallbackElement: <main className="portal"><Loading /></main>,
   children: [
     { path: '/', element: <HomePage /> },
+    { path: '/road-circuit/', lazy: lazyPage(() => import('./road-circuit').then(module => module.RoadCircuitPage)) },
     { path: '/login/', element: <LoginPage /> },
     { path: '/reg/', element: <RegisterPage /> },
     { path: '/privacy-policy/', element: <PrivacyPage /> },
-    { path: '/profile/', loader: loadResource('profile/'), element: <Gate><AccountPage /></Gate> },
-    { path: '/profile/edit/', loader: loadResource('profile/'), element: <Gate><EditProfilePage /></Gate> },
-    { path: '/profile/password/', element: <Gate><PasswordPage /></Gate> },
-    { path: '/age/', element: <Gate role="child"><QuizzesPage /></Gate> },
+    { path: '/profile/', loader: loadResource('profile/'), lazy: lazyPage(() => account().then(module => module.AccountPage), true) },
+    { path: '/profile/edit/', loader: loadResource('profile/'), lazy: lazyPage(() => account().then(module => module.EditProfilePage), true) },
+    { path: '/profile/password/', lazy: lazyPage(() => account().then(module => module.PasswordPage), true) },
+    { path: '/age/', lazy: lazyPage(() => quizzes().then(module => module.QuizzesPage), 'child') },
     ...Object.entries(quizInfo).flatMap(([key, info]) => {
       const type = key as keyof typeof quizInfo
       return [
-        { path: info.path, loader: loadResource(`tests/${type}/`), element: <Gate role="child"><QuizPage type={type} /></Gate> },
-        { path: info.result, loader: loadResource(({ request }) => `tests/${type}/results/${new URL(request.url).search}`), element: <Gate role="child"><ResultPage type={type} /></Gate> },
+        { path: info.path, loader: loadResource(`tests/${type}/`),
+          lazy: lazyPage(() => quizzes().then(({ QuizPage }) => () => <QuizPage type={type} />), 'child') },
+        { path: info.result, loader: loadResource(({ request }) => `tests/${type}/results/${new URL(request.url).search}`),
+          lazy: lazyPage(() => quizzes().then(({ ResultPage }) => () => <ResultPage type={type} />), 'child') },
       ]
     }),
-    { path: '/signs/', loader: loadResource('signs/'), element: <SignsHomePage /> },
-    { path: '/signs/all/', loader: loadResource(({ request }) => 'signs/' + new URL(request.url).search), element: <SignsListPage /> },
-    { path: '/signs/:slug/', loader: loadResource(({ params }) => `signs/${encodeURIComponent(params.slug ?? '')}/`), element: <Gate><SignDetailPage /></Gate> },
-    { path: '/signs/:slug/test/', loader: loadResource(({ params }) => `signs/${encodeURIComponent(params.slug ?? '')}/test/`), element: <Gate><SignTestPage /></Gate> },
-    { path: '/pdd-teacher/', loader: loadResource('lesson-reports/'), element: <Gate role="teacher"><TeacherPage /></Gate> },
+    ...['/signs/', '/signs/all/'].map(path => ({
+      path, loader: loadResource(({ request }) => 'signs/' + new URL(request.url).search),
+      lazy: lazyPage(() => signs().then(module => module.SignsListPage)),
+    })),
+    { path: '/safe-route/', loader: loadResource('safe-route/'),
+      lazy: lazyPage(() => import('./safe-route-page').then(module => module.SafeRoutePage)) },
+    { path: '/rating/', loader: loadResource(({ request }) => 'rating/' + new URL(request.url).search),
+      lazy: lazyPage(() => import('./rating-page').then(module => module.RatingPage), true) },
+    { path: '/practice/', loader: loadResource(({ request }) => 'practice/' + new URL(request.url).search),
+      lazy: lazyPage(() => practice().then(module => module.PracticePage)) },
+    { path: '/practice/history/', loader: loadResource('practice/history/'),
+      lazy: lazyPage(() => practice().then(module => module.PracticeHistoryPage), true) },
+    { path: '/practice/:slug/', loader: loadResource(({ params, request }) => 'practice/' + encodeURIComponent(params.slug ?? '') + '/' + new URL(request.url).search),
+      lazy: lazyPage(() => practice().then(module => module.PracticeExercisePage)) },
+    { path: '/news/', loader: loadResource(({ request }) => 'news/' + new URL(request.url).search),
+      lazy: lazyPage(() => news().then(module => module.NewsPage)) },
+    { path: '/news/:slug/', loader: loadResource(({ params }) => 'news/' + encodeURIComponent(params.slug ?? '') + '/'),
+      lazy: lazyPage(() => news().then(module => module.NewsPostPage)) },
+    { path: '/signs/:slug/', loader: loadResource(({ params }) => `signs/${encodeURIComponent(params.slug ?? '')}/`),
+      lazy: lazyPage(() => signs().then(module => module.SignDetailPage)) },
+    { path: '/signs/:slug/test/', loader: loadResource(({ params }) => `signs/${encodeURIComponent(params.slug ?? '')}/test/`),
+      lazy: lazyPage(() => signs().then(module => module.SignTestPage), true) },
+    { path: '/pdd-teacher/', lazy: async () => {
+      const { loadLessonReports, TeacherPage } = await account()
+      return { loader: loadLessonReports, element: <Gate role="teacher"><TeacherPage /></Gate> }
+    } },
+    { path: '/pdd-teacher/:id/', lazy: async () => {
+      const { loadLessonReports, TeacherReportPage } = await account()
+      return { loader: loadLessonReports, element: <Gate role="teacher"><TeacherReportPage /></Gate> }
+    } },
     { path: '*', element: <NotFoundPage /> },
   ],
 }])
 
 createRoot(document.getElementById('root')!).render(
-  <StrictMode><SessionProvider><RouterProvider router={router} /></SessionProvider></StrictMode>,
+  <StrictMode><MotionProvider><SessionProvider><RouterProvider router={router} /></SessionProvider></MotionProvider></StrictMode>,
 )

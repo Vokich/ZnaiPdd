@@ -1,127 +1,52 @@
 from django import forms
 from django.contrib.auth.models import User
+from django.contrib.auth.password_validation import validate_password
 from django.core.exceptions import ValidationError
-from .models import Profile, TeacherLessonReport
-from .municipalities import is_municipality
+from django.db import transaction
+from .models import Organization, Profile, TeacherLessonReport
 
 
 class UserRegistrationForm(forms.ModelForm):
-    username = forms.CharField(
-        label='Логин',
-        max_length=150,
-        widget=forms.TextInput(attrs={'class': 'form-control'})
-    )
-    password = forms.CharField(
-        label='Пароль',
-        widget=forms.PasswordInput(attrs={'class': 'form-control'})
-    )
-    surname1 = forms.CharField(
-        label='Фамилия',
-        max_length=50,
-        widget=forms.TextInput(attrs={'class': 'form-control'})
-    )
-    name = forms.CharField(
-        label='Имя',
-        max_length=50,
-        widget=forms.TextInput(attrs={'class': 'form-control'})
-    )
-    surname2 = forms.CharField(
-        label='Отчество',
-        max_length=50,
-        required=False,
-        widget=forms.TextInput(attrs={'class': 'form-control'})
-    )
-    email = forms.EmailField(
-        label='Почта',
-        required=True,
-        widget=forms.EmailInput(attrs={'class': 'form-control'})
-    )
-    school = forms.CharField(
-        label='Учебное заведение',
-        max_length=100,
-        widget=forms.TextInput(attrs={'class': 'form-control'})
-    )
-    birth_date = forms.DateField(
-        label='Дата рождения',
-        widget=forms.DateInput(attrs={'type': 'date', 'class': 'form-control'}),
-    )
-    region = forms.CharField(
-        label='Муниципалитет',
-        max_length=400,
-        widget=forms.TextInput(attrs={'class': 'form-control'})
-    )
-    role = forms.ChoiceField(
-        label='Роль',
-        choices=Profile.Role.choices,
-        widget=forms.Select(attrs={'class': 'form-control', 'id': 'id_role'})
-    )
-    position = forms.CharField(
-        label='Должность',
-        max_length=100,
-        required=False,
-        widget=forms.TextInput(attrs={'class': 'form-control', 'id': 'id_position'})
-    )
+    password = forms.CharField(label='Пароль', strip=False, widget=forms.PasswordInput)
+    surname1 = forms.CharField(label='Фамилия', max_length=50)
+    name = forms.CharField(label='Имя', max_length=50)
+    surname2 = forms.CharField(label='Отчество (при наличии)', max_length=50, required=False)
+    consent = forms.BooleanField(label='Согласие на обработку персональных данных')
 
     class Meta:
         model = User
-        fields = ['username', 'email', 'password']
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-
-    def clean_username(self):
-        username = self.cleaned_data.get('username')
-        if username and User.objects.filter(username=username).exists():
-            raise ValidationError("Пользователь с таким логином уже существует")
-        return username
+        fields = ['username', 'password', 'surname1', 'name', 'surname2', 'email', 'consent']
+        labels = {'username': 'Логин', 'email': 'Почта'}
 
     def clean_email(self):
-        email = self.cleaned_data.get('email')
+        email = self.cleaned_data['email']
         if email and User.objects.filter(email=email).exists():
-            raise ValidationError("Пользователь с таким email уже существует")
+            raise ValidationError('Пользователь с такой почтой уже существует.')
         return email
 
-    def clean_birth_date(self):
-        birth_date = self.cleaned_data.get('birth_date')
-        from datetime import date
-        if birth_date and birth_date > date.today():
-            raise ValidationError("Дата рождения не может быть в будущем")
-        return birth_date
+    def _post_clean(self):
+        super()._post_clean()
+        password = self.cleaned_data.get('password')
+        if password:
+            try:
+                validate_password(password, self.instance)
+            except ValidationError as error:
+                self.add_error('password', error)
 
-    def clean_region(self):
-        region = self.cleaned_data['region']
-        if not is_municipality(region):
-            raise ValidationError('Выберите муниципалитет из списка')
-        return region
-
-    def clean(self):
-        cleaned_data = super().clean()
-        role = cleaned_data.get('role')
-        position = cleaned_data.get('position')
-        if role == 'teacher' and not position:
-            self.add_error('position', 'Поле "Должность" обязательно для педагога')
-
-        return cleaned_data
-
+    @transaction.atomic
     def save(self, commit=True):
-      user = User(
-          username=self.cleaned_data['username'],
-          email=self.cleaned_data['email']
-      )
-      user.set_password(self.cleaned_data['password'])
-      if commit:
-          user.save()
-          profile = user.profile
-          profile.role = self.cleaned_data['role']
-          profile.surname1 = self.cleaned_data['surname1']
-          profile.name = self.cleaned_data['name']
-          profile.surname2 = self.cleaned_data['surname2']
-          profile.school = self.cleaned_data['school']
-          profile.birth_date = self.cleaned_data['birth_date']
-          profile.region = self.cleaned_data['region']
-          profile.position = self.cleaned_data.get('position', '')
-          profile.save()
-      return user
+        user = super().save(commit=False)
+        user.set_password(self.cleaned_data['password'])
+        if commit:
+            user.save()
+            Profile.objects.create(
+                user=user,
+                role=Profile.Role.CHILD,
+                surname1=self.cleaned_data['surname1'],
+                name=self.cleaned_data['name'],
+                surname2=self.cleaned_data['surname2'],
+            )
+        return user
 
 
 class LoginForm(forms.Form):
@@ -132,6 +57,7 @@ class LoginForm(forms.Form):
     )
     password = forms.CharField(
         label='Пароль',
+        strip=False,
         widget=forms.PasswordInput(attrs={'class': 'form-control'})
     )
 
@@ -1126,187 +1052,92 @@ class AdultPddTestForm(forms.Form):
     }
 
 class TeacherLessonReportForm(forms.ModelForm):
+    participants_count = forms.IntegerField(label='Количество участников', min_value=1, max_value=2147483647)
+
     class Meta:
-      model = TeacherLessonReport
-      fields = ['lesson_date', 'location', 'children_count', 'children_list', 'photo_link']
-      widgets = {
-        'lesson_date': forms.DateInput(
-          format='%Y-%m-%d',
-          attrs={'type': 'date', 'class': 'form-control'}),
-        'location': forms.TextInput(
-          attrs={'class': 'form-control', 'placeholder': 'Например: МБОУ СОШ №1, кабинет 204'}),
-        'children_count': forms.NumberInput(attrs={'class': 'form-control', 'min': 1}),
-        'children_list': forms.Textarea(attrs={
-          'class': 'form-control',
-          'rows': 5,
-          'placeholder': 'Иванов Иван\nПетрова Мария\nСидоров Алексей\nили: Иванов Иван, Петрова Мария, Сидоров Алексей'
-        }),
-        'photo_link': forms.URLInput(attrs={'class': 'form-control', 'placeholder': 'https://...'})
-      }
-      labels = {
-        'lesson_date': 'Дата проведения урока',
-        'location': 'Место проведения',
-        'children_count': 'Количество детей',
-        'children_list': 'Список детей',
-        'photo_link': 'Ссылка на фотоотчёт или группу',
-      }
-      help_texts = {
-        'children_list': 'Укажите имена детей (можно через запятую или каждое с новой строки)',
-        'photo_link': 'Ссылка на фотоальбом (Google Photos, Яндекс.Диск, VK группа и т.д.)',
-      }
+        model = TeacherLessonReport
+        fields = ['lesson_date', 'organization', 'location', 'participants_count', 'route_level', 'practice', 'completed_count']
+        widgets = {'lesson_date': forms.DateInput(format='%Y-%m-%d', attrs={'type': 'date'})}
 
-    def clean_children_count(self):
-      count = self.cleaned_data.get('children_count')
-      if count and count <= 0:
-        raise ValidationError("Количество детей должно быть больше 0")
-      return count
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        from django.db.models import Q
+        from .practice import public_exercises
 
-    def clean_children_list(self):
-      children_list = self.cleaned_data.get('children_list')
-      if not children_list:
-        raise ValidationError("Укажите список детей")
+        self.fields['practice'].queryset = self.fields['practice'].queryset.filter(
+            Q(pk__in=public_exercises().values('pk')) | Q(pk=self.instance.practice_id),
+        )
 
-      import re
-      items = re.split(r'[,\n;]+', children_list)
-      items = [item.strip() for item in items if item.strip()]
-
-      if len(items) < 1:
-        raise ValidationError("Укажите хотя бы одного ребёнка")
-
-      return children_list
+    def clean(self):
+        data = super().clean()
+        if 'children_list' in self.data or 'photo_link' in self.data:
+            raise ValidationError('Списки детей и ссылки на фото не принимаются.')
+        if 'organization' in data and 'location' in data and not (data['organization'] or data['location']):
+            self.add_error('location', 'Выберите организацию или укажите место проведения.')
+        return data
 
 
 class UserProfileForm(forms.ModelForm):
-  username = forms.CharField(
-    label='Логин',
-    max_length=150,
-    widget=forms.TextInput(attrs={'class': 'form-control'})
-  )
-  email = forms.EmailField(
-    label='Почта',
-    required=True,
-    widget=forms.EmailInput(attrs={'class': 'form-control'})
-  )
-  surname1 = forms.CharField(
-    label='Фамилия',
-    max_length=50,
-    widget=forms.TextInput(attrs={'class': 'form-control'})
-  )
-  name = forms.CharField(
-    label='Имя',
-    max_length=50,
-    widget=forms.TextInput(attrs={'class': 'form-control'})
-  )
-  surname2 = forms.CharField(
-    label='Отчество',
-    max_length=50,
-    required=False,
-    widget=forms.TextInput(attrs={'class': 'form-control'})
-  )
-  school = forms.CharField(
-    label='Учебное заведение',
-    max_length=100,
-    widget=forms.TextInput(attrs={'class': 'form-control'})
-  )
-  birth_date = forms.DateField(
-    label='Дата рождения',
-    widget=forms.DateInput(
-      format='%Y-%m-%d',
-      attrs={'type': 'date', 'class': 'form-control'}),
-  )
-  region = forms.CharField(
-    label='Муниципалитет',
-    max_length=400,
-    widget=forms.TextInput(attrs={'class': 'form-control'})
-  )
-  position = forms.CharField(
-    label='Должность',
-    max_length=100,
-    required=False,
-    widget=forms.TextInput(attrs={'class': 'form-control', 'id': 'id_position'})
-  )
+    surname1 = forms.CharField(label='Фамилия', max_length=50)
+    name = forms.CharField(label='Имя', max_length=50)
+    surname2 = forms.CharField(label='Отчество (при наличии)', max_length=50, required=False)
+    organization = forms.ModelChoiceField(label='Организация', queryset=Organization.objects.select_related('municipality'), required=False)
+    position = forms.CharField(label='Должность', max_length=100, required=False)
 
-  class Meta:
-    model = User
-    fields = ['username', 'email']
+    class Meta:
+        model = User
+        fields = ['username', 'email', 'surname1', 'name', 'surname2', 'organization', 'position']
+        labels = {'username': 'Логин', 'email': 'Почта'}
 
-  def __init__(self, *args, **kwargs):
-    self.profile_instance = kwargs.pop('profile_instance', None)
-    super().__init__(*args, **kwargs)
-    if self.profile_instance:
-      self.fields['surname1'].initial = self.profile_instance.surname1
-      self.fields['name'].initial = self.profile_instance.name
-      self.fields['surname2'].initial = self.profile_instance.surname2
-      self.fields['school'].initial = self.profile_instance.school
-      self.fields['birth_date'].initial = self.profile_instance.birth_date
-      self.fields['region'].initial = self.profile_instance.region
-      self.fields['position'].initial = self.profile_instance.position
-      if self.profile_instance.role != Profile.Role.TEACHER:
-        self.fields['position'].required = False
+    def __init__(self, *args, profile_instance=None, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.profile = profile_instance or Profile(user=self.instance)
+        self.profile_fields = ['surname1', 'name', 'surname2', 'organization']
+        if self.profile.role == Profile.Role.TEACHER:
+            self.profile_fields.append('position')
+        else:
+            del self.fields['position']
+        for field in self.profile_fields:
+            self.initial[field] = getattr(self.profile, field)
 
-  def clean_username(self):
-    username = self.cleaned_data.get('username')
-    if username and User.objects.filter(username=username).exclude(pk=self.instance.pk).exists():
-      raise ValidationError("Пользователь с таким логином уже существует")
-    return username
+    def clean_email(self):
+        email = self.cleaned_data['email']
+        if email and email != self.initial.get('email') and User.objects.exclude(pk=self.instance.pk).filter(email=email).exists():
+            raise ValidationError('Пользователь с такой почтой уже существует.')
+        return email
 
-  def clean_email(self):
-    email = self.cleaned_data.get('email')
-    if email and User.objects.filter(email=email).exclude(pk=self.instance.pk).exists():
-      raise ValidationError("Пользователь с таким email уже существует")
-    return email
-
-  def clean_birth_date(self):
-    birth_date = self.cleaned_data.get('birth_date')
-    from datetime import date
-    if birth_date and birth_date > date.today():
-      raise ValidationError("Дата рождения не может быть в будущем")
-    return birth_date
-
-  def clean_region(self):
-    region = self.cleaned_data['region']
-    if self.profile_instance and region == self.profile_instance.region.strip():
-      return self.profile_instance.region
-    if not is_municipality(region):
-      raise ValidationError('Выберите муниципалитет из списка')
-    return region
-
-  def clean(self):
-    cleaned_data = super().clean()
-    position = cleaned_data.get('position')
-    if self.profile_instance and self.profile_instance.role == Profile.Role.TEACHER and not position:
-      self.add_error('position', 'Поле "Должность" обязательно для педагога')
-    return cleaned_data
-
-  def save(self, commit=True):
-    user = super().save(commit=False)
-    user.username = self.cleaned_data['username']
-    user.email = self.cleaned_data['email']
-    if commit:
-      user.save()
-      profile = self.profile_instance
-      profile.surname1 = self.cleaned_data['surname1']
-      profile.name = self.cleaned_data['name']
-      profile.surname2 = self.cleaned_data['surname2']
-      profile.school = self.cleaned_data['school']
-      profile.birth_date = self.cleaned_data['birth_date']
-      profile.region = self.cleaned_data['region']
-      profile.position = self.cleaned_data.get('position', '')
-      profile.save()
-    return user
+    @transaction.atomic
+    def save(self, commit=True):
+        user = super().save(commit=False)
+        if commit:
+            user.save(update_fields=['username', 'email'])
+            for field in self.profile_fields:
+                setattr(self.profile, field, self.cleaned_data[field])
+            changed_fields = list(self.profile_fields)
+            if not self.profile.role:
+                self.profile.role = Profile.Role.CHILD
+                changed_fields.append('role')
+            if self.profile.pk:
+                self.profile.save(update_fields=changed_fields)
+            else:
+                self.profile.save()
+        return user
 
 
 class PasswordChangeForm(forms.Form):
   old_password = forms.CharField(
     label='Текущий пароль',
+    strip=False,
     widget=forms.PasswordInput(attrs={'class': 'form-control'})
   )
   new_password = forms.CharField(
     label='Новый пароль',
+    strip=False,
     widget=forms.PasswordInput(attrs={'class': 'form-control'})
   )
   confirm_password = forms.CharField(
     label='Подтвердите новый пароль',
+    strip=False,
     widget=forms.PasswordInput(attrs={'class': 'form-control'})
   )
 
@@ -1326,11 +1157,14 @@ class PasswordChangeForm(forms.Form):
     confirm_password = cleaned_data.get('confirm_password')
     if new_password and confirm_password and new_password != confirm_password:
       self.add_error('confirm_password', 'Пароли не совпадают')
-    if new_password and len(new_password) < 6:
-      self.add_error('new_password', 'Пароль должен содержать минимум 6 символов')
+    if new_password:
+      try:
+        validate_password(new_password, self.user)
+      except ValidationError as error:
+        self.add_error('new_password', error)
     return cleaned_data
 
   def save(self):
     self.user.set_password(self.cleaned_data['new_password'])
-    self.user.save()
+    self.user.save(update_fields=['password'])
     return self.user

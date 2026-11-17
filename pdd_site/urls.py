@@ -15,11 +15,14 @@ Including another URLconf
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
 from django.contrib import admin
-from django.urls import include, path
+from django.urls import include, path, re_path
 from django.views.generic import RedirectView
 from app import views
 from django.conf import settings
 from django.conf.urls.static import static
+from app.sign_catalog import uploaded_sign_image
+from app.news_api import news_cover, news_photo
+from app.practice_api import practice_photo
 
 urlpatterns = [
     path('api/', include('app.api_urls')),
@@ -46,6 +49,10 @@ urlpatterns = [
     path('signs/all/', views.signs_list, name='signs_list'),
     path('signs/<slug:slug>/', views.sign_detail, name='sign_detail'),
     path('signs/<slug:slug>/test/', views.sign_test, name='sign_test'),
+    re_path(r'^media/signs/(?P<name>.+)$', uploaded_sign_image, name='uploaded_sign_image'),
+    re_path(r'^media/news/gallery/(?P<name>.+)$', news_photo, name='news_photo'),
+    re_path(r'^media/news/(?P<name>.+)$', news_cover, name='news_cover'),
+    re_path(r'^media/practice/(?P<name>.+)$', practice_photo, name='practice_photo'),
 ]
 
 if settings.DEBUG:

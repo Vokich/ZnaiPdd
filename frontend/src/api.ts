@@ -1,5 +1,5 @@
-export type Role = 'child' | 'teacher'
-export type User = { id: number; username: string; name: string; role: Role | null }
+export type Role = 'child' | 'teacher' | 'admin'
+export type User = { id: number; username: string; name: string; role: Role | null; can_submit_reports: boolean }
 
 type ErrorBody = Record<string, string | string[]>
 
@@ -14,7 +14,7 @@ export class ApiError extends Error {
   }
 }
 
-function csrfToken() {
+export function csrfToken() {
   return document.cookie.split('; ').find(cookie => cookie.startsWith('csrftoken='))?.slice(10) ?? ''
 }
 
@@ -44,9 +44,12 @@ export async function api<T>(path: string, options: {
   return body as T
 }
 
+export type Organization = { id: number; name: string; municipality: string }
+export type GalleryImage = { id: number; url: string; alt: string; caption: string }
 export type Profile = User & {
-  surname1: string; surname2: string; school: string; birth_date: string
-  region: string; position: string; email: string; age: number | null
+  surname1: string; surname2: string; school: string
+  region: string; position: string; email: string; organization: Organization | null
+  competition_enabled: boolean
 }
 
 export type QuizType = 'junior' | 'teen' | 'adult'
@@ -54,12 +57,24 @@ export type QuizResult = {
   id: number; test_type: QuizType; score: number; total: number; passing_score: number
   passed: boolean; completed_at: string
 }
-export type ProfileResponse = { profile: Profile; results: QuizResult[]; reports_count: number }
+export type RatingOverview = {
+  points: number; maximum: number; directions: { id: 'routes' | 'tests' | 'practice'; points: number }[]
+}
+export type ProfileResponse = {
+  profile: Profile; results: QuizResult[]; reports_count: number; rating: RatingOverview
+  suggested_practice: { slug: string; title: string; kind_id: string; topic: string }[]
+}
 export type Quiz = { passing_score: number; questions: { id: number; text: string; options: string[] }[] }
-export type LessonReport = { id: number; lesson_date: string; location: string; children_count: number; photo_link: string }
+export type LessonReport = {
+  id: number; lesson_date: string; location: string; participants_count: number; organization: Organization | null
+  route_level: string; completed_count: number | null
+  practice: { id: number; title: string; slug: string } | null
+}
 export type Sign = {
   slug: string; category: string; category_label: string; unlocked: boolean
-  name: string | null; image: string | null; description: string | null; fun_fact: string | null
+  number: string; name: string; image: string | null; description: string; fun_fact: string
+  source_url: string; image_credit: string; has_test: boolean
+  exercises?: { slug: string; title: string }[]
 }
 export type SignCatalog = {
   total: number; unlocked_count: number; categories: { value: string; label: string }[]; signs: Sign[]

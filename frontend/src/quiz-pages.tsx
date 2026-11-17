@@ -1,16 +1,14 @@
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import type { FormEvent } from 'react'
 import { Link, useNavigate } from './navigation'
+import { useLocation } from 'react-router-dom'
 import { api, ApiError } from './api'
 import type { Quiz, QuizResult, QuizType } from './api'
 import { useResource } from './state'
 import { ButtonLink, Feedback, FieldErrors, Loading, LoadError, PortalHeading } from './ui'
-
-export const quizInfo = {
-  junior: { ages: '8–12 лет', path: '/age/child/', result: '/test-result-child/', label: 'Младшая группа' },
-  teen: { ages: '12–15 лет', path: '/age/teen/', result: '/test-result-teen/', label: 'Подростковая группа' },
-  adult: { ages: '16–18 лет', path: '/age/adults/', result: '/test-result-adult/', label: 'Старшая группа' },
-} satisfies Record<QuizType, { ages: string; path: string; result: string; label: string }>
+import { quizInfo } from './quiz-info'
+import { Mascot } from './mascot'
+import { FeedbackMotion, MotionNumber, useCelebrate } from './motion-ui'
 
 export function QuizzesPage() {
   return <>
@@ -41,7 +39,7 @@ function QuizForm({ type, quiz }: { type: QuizType; quiz: Quiz }) {
     setError(undefined)
     try {
       const result = await api<QuizResult>(`tests/${type}/results/`, { method: 'POST', data: { answers } })
-      navigate(quizInfo[type].result + '?id=' + result.id)
+      navigate(quizInfo[type].result + '?id=' + result.id, { state: { justCompleted: true } })
     } catch (error) { setError(error) }
     finally { setPending(false) }
   }
@@ -73,15 +71,29 @@ function QuizForm({ type, quiz }: { type: QuizType; quiz: Quiz }) {
 
 export function ResultPage({ type }: { type: QuizType }) {
   const { data: result, error, retry } = useResource<QuizResult>()
+  const { state } = useLocation()
+  const score = useRef<HTMLElement>(null)
+  const celebrated = useRef<number | null>(null)
+  const celebrate = useCelebrate()
+  useEffect(() => {
+    if (!result?.passed || !state?.justCompleted || celebrated.current === result.id) return
+    celebrated.current = result.id
+    void celebrate(score.current)
+  }, [celebrate, result, state])
   if (error instanceof ApiError && error.status === 404) return <div className="panel status-panel"><Feedback error={error} /><ButtonLink to={quizInfo[type].path}>Пройти тест →</ButtonLink></div>
   if (error) return <LoadError error={error} retry={retry} />
   if (!result) return <Loading />
   return <>
     <PortalHeading title={result.passed ? 'Тест пройден!' : 'Попробуй ещё раз'}>Тест по ПДД · {quizInfo[type].ages}</PortalHeading>
-    <section className="panel result-panel">
-      <span className="tag">{result.passed ? 'Зачёт' : 'Новая попытка'}</span>
-      <p className="score"><strong>{result.score}</strong> / {result.total}</p>
-      <p>Проходной балл — {result.passing_score}.</p>
+    <section className="panel result-panel" ref={score}>
+      <div className="quiz-result-summary">
+        <FeedbackMotion success={result.passed} attempt={result.id}>
+          <span className="tag">{result.passed ? 'Зачёт' : 'Новая попытка'}</span>
+          <p className="score"><strong><MotionNumber value={result.score} /></strong> / {result.total}</p>
+          <p>Проходной балл — {result.passing_score}.</p>
+        </FeedbackMotion>
+        <Mascot mood={result.passed ? 'success' : 'retry'} reaction={result.id} />
+      </div>
       <div className="actions">
         {result.passed && <a className="button" href={`/api/tests/${type}/certificate/?id=${result.id}`}>Скачать {result.score >= 24 ? 'диплом' : 'сертификат'} ↓</a>}
         <ButtonLink to={result.passed ? '/profile/' : quizInfo[type].path} light={result.passed}>{result.passed ? 'Мой кабинет →' : 'Пройти заново →'}</ButtonLink>
