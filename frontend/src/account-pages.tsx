@@ -193,7 +193,7 @@ export function TeacherPage() {
     {error ? <LoadError error={error} retry={retry} /> : !data ? <Loading /> : <div className="teacher-layout">
       <div>
         <ReportForm key={savedCount} options={data.options} onSave={() => { setSavedCount(count => count + 1); setSaved(true); retry() }} />
-        <Notice key={savedCount} message="Отчёт сохранён." open={saved} onOpenChange={setSaved} />
+        <Notice key={'notice-' + savedCount} message="Отчёт сохранён." open={saved} onOpenChange={setSaved} />
       </div>
       <section className="panel history">
         <h2>Мои отчёты</h2>

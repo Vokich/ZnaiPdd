@@ -33,7 +33,7 @@ export function NewsPage() {
     </nav>
     {error ? <LoadError error={error} retry={retry} /> : !data ? <Loading /> : <>
       {data.items.length ? <div className="news-grid">{data.items.map(post =>
-        <Reveal key={post.slug}><Link to={'/news/' + post.slug + '/'} className="panel publication-card">
+        <Reveal key={post.slug}><Link to={'/news/' + post.slug + '/'} className="panel publication-card" viewTransition>
           <PublicationCover post={post} />
           <div className="publication-card-copy">
             <small>{post.kind_label} · {articleDate(post)}</small>
@@ -56,7 +56,7 @@ export function NewsPage() {
 export function NewsPostPage() {
   const { data, error, retry } = useResource<Article>()
   return <>
-    <Link className="text-link" to="/news/">← К новостям</Link>
+    <Link className="text-link" to="/news/" viewTransition>← К новостям</Link>
     {error ? <LoadError error={error} retry={retry} /> : !data ? <Loading /> : <>
       <PortalHeading title={data.title}>{data.kind_label} · {articleDate(data)}</PortalHeading>
       <article className="panel publication">

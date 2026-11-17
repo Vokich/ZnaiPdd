@@ -1,4 +1,4 @@
-from io import StringIO
+from io import BytesIO, StringIO
 from pathlib import Path
 from tempfile import TemporaryDirectory
 
@@ -6,6 +6,8 @@ from django.contrib.auth.models import User
 from django.core.management import call_command
 from django.test import TestCase, override_settings
 from django.urls import reverse
+from pypdf import PdfReader
+from reportlab.pdfbase.pdfmetrics import stringWidth
 from rest_framework.test import APIClient
 
 from .forms import JuniorPddTestForm
@@ -85,6 +87,33 @@ class LearningApiTests(TestCase):
         user = User.objects.create_user(username=username)
         Profile.objects.create(user=user, role=Profile.Role.TEACHER, name='Анна', surname1='Петрова')
         return user
+
+    def test_long_names_fit_both_award_templates(self):
+        profile = self.student.profile
+        profile.surname1, profile.name = 'Ш' * 50, 'Ж' * 50
+        profile.save()
+        self.client.force_login(self.student)
+        for score in (18, 30):
+            with self.subTest(score=score):
+                result = TestResult.objects.create(
+                    user=self.student, test_type='junior', score=score, total_questions=30,
+                    passing_score=18, passed=True,
+                )
+                download = self.client.get(f'/api/tests/junior/certificate/?id={result.pk}')
+                page = PdfReader(BytesIO(b''.join(download.streaming_content))).pages[0]
+                width = float(page.mediabox.width)
+                lines = {}
+
+                def check_line(text, cm, tm, font, size):
+                    line = text.strip()
+                    if line in (profile.surname1, profile.name):
+                        lines[line] = tm[5]
+                        self.assertGreater(tm[4], width * .27)
+                        self.assertLess(tm[4] + stringWidth(line, 'LilitaOne', size), width * .75)
+
+                page.extract_text(visitor_text=check_line)
+                self.assertEqual(set(lines), {profile.surname1, profile.name})
+                self.assertGreater(lines[profile.surname1], lines[profile.name])
 
     def test_quiz_scores_server_side_and_issues_pdf_for_own_result(self):
         self.client.force_login(self.student)

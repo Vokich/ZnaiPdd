@@ -9,12 +9,13 @@ export function useViewportMotion(ref: RefObject<HTMLElement | null>, page: stri
     if (!enabled || !root || typeof IntersectionObserver === 'undefined') return
     const observed = new Set<HTMLElement>()
     const observer = new IntersectionObserver(entries => {
-      for (const { target, isIntersecting } of entries) {
+      for (const { target, isIntersecting, intersectionRatio } of entries) {
         const element = target as HTMLElement
         if (element.hasAttribute('data-loop')) element.dataset.loop = isIntersecting ? 'visible' : ''
-        else element.dataset.scrollState = isIntersecting ? 'enter' : ''
+        else if (!isIntersecting) delete element.dataset.scrollState
+        else if (intersectionRatio >= .15) element.dataset.scrollState = 'enter'
       }
-    })
+    }, { threshold: [0, .15] })
 
     function observeChildren(element: Element) {
       const children = Array.from(element.querySelectorAll<HTMLElement>(target))

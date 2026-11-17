@@ -1,6 +1,7 @@
 import {
   Link as RouterLink,
   NavLink as RouterNavLink,
+  resolvePath,
   useLocation,
   useNavigate as useRouterNavigate,
   useResolvedPath,
@@ -15,11 +16,15 @@ function useViewTransitions() {
   return enabled && typeof document.startViewTransition === 'function'
 }
 
+function changesPage(current: string, destination: string) {
+  return current.replace(/\/$/, '') !== destination.replace(/\/$/, '')
+}
+
 function useLinkTransition(to: To, relative?: LinkProps['relative']) {
   const enabled = useViewTransitions()
-  const current = useLocation()
+  const { pathname } = useLocation()
   const destination = useResolvedPath(to, { relative })
-  return enabled && destination.pathname.replace(/\/$/, '') !== current.pathname.replace(/\/$/, '')
+  return enabled && changesPage(pathname, destination.pathname)
 }
 
 export function Link({ viewTransition = true, ...props }: LinkProps) {
@@ -41,8 +46,10 @@ export function useSharedArt(to: To, name: string, key?: string): CSSProperties 
 
 export function useNavigate() {
   const navigate = useRouterNavigate()
-  const viewTransition = useViewTransitions()
+  const { pathname } = useLocation()
+  const enabled = useViewTransitions()
   return (to: To, options?: NavigateOptions) => navigate(to, {
-    ...options, viewTransition: viewTransition && options?.viewTransition !== false,
+    ...options,
+    viewTransition: enabled && options?.viewTransition !== false && changesPage(pathname, resolvePath(to, pathname).pathname),
   })
 }

@@ -1,16 +1,26 @@
-import { useEffect, useId, useRef, useState } from 'react'
+import { useEffect, useId, useLayoutEffect, useRef, useState } from 'react'
 import type { ComponentProps, ReactNode } from 'react'
-import { Link, NavLink, useNavigate } from './navigation'
+import { useLocation, useNavigate } from 'react-router-dom'
+import { Link, NavLink } from './navigation'
 import { api, ApiError } from './api'
 import type { GalleryImage, Organization } from './api'
 import { useSession } from './state'
 import { useMotionSettings } from './motion-settings'
 import * as Switch from '@radix-ui/react-switch'
 import * as m from 'motion/react-m'
-import { spring } from './motion-ui'
+import { spring, useScrollEntrance } from './motion-ui'
 
-export function ButtonLink({ to, children, light = false }: { to: string; children: ReactNode; light?: boolean }) {
-  return <Link className={light ? 'button button-light' : 'button'} to={to}>{children}</Link>
+export function ButtonLink({ to, children, light = false, viewTransition }: {
+  to: string; children: ReactNode; light?: boolean; viewTransition?: boolean
+}) {
+  return <Link className={light ? 'button button-light' : 'button'} to={to} viewTransition={viewTransition}>{children}</Link>
+}
+
+function HeaderLink({ to, children }: { to: string; children: ReactNode }) {
+  return <NavLink to={to}>{({ isActive }) => <>
+    {children}
+    {isActive && <span className="header-active" aria-hidden="true" />}
+  </>}</NavLink>
 }
 
 function Wordmark() {
@@ -30,40 +40,39 @@ function MotionToggle() {
   </Switch.Root>
 }
 
-function HeaderLink({ to, children, onClick }: { to: string; children: ReactNode; onClick: () => void }) {
-  const { enabled } = useMotionSettings()
-  return <NavLink className="motion-header-link" to={to} onClick={onClick}>
-    {({ isActive }) => <>
-      {isActive && <m.span aria-hidden="true" className="header-active" layoutId={enabled ? 'header-active' : undefined}
-        transition={enabled ? spring : { duration: 0 }} />}
-      {children}
-    </>}
-  </NavLink>
-}
-
 export function Header({ kind }: { kind: 'home' | 'auth' | 'portal' }) {
   const { user, setUser } = useSession()
   const navigate = useNavigate()
   const [signingOut, setSigningOut] = useState(false)
   const [error, setError] = useState<unknown>()
   const [menu, setMenu] = useState(false)
+  const { key } = useLocation()
   const header = useRef<HTMLElement>(null)
   const menuToggle = useRef<HTMLButtonElement>(null)
+  const nav = useRef<HTMLElement>(null)
+  useLayoutEffect(() => { setMenu(false) }, [key])
   useEffect(() => {
     if (!menu) return
+    nav.current?.querySelector('a')?.focus({ preventScroll: true })
+    const compact = window.matchMedia('(max-width: 1140px)')
+    function onResize() {
+      if (!compact.matches) setMenu(false)
+    }
     function onPointerDown(event: PointerEvent) {
       if (event.target instanceof Node && !header.current?.contains(event.target)) setMenu(false)
     }
     function onKeyDown(event: KeyboardEvent) {
       if (event.key !== 'Escape') return
       setMenu(false)
-      menuToggle.current?.focus()
+      menuToggle.current?.focus({ preventScroll: true })
     }
     document.addEventListener('pointerdown', onPointerDown)
     document.addEventListener('keydown', onKeyDown)
+    compact.addEventListener('change', onResize)
     return () => {
       document.removeEventListener('pointerdown', onPointerDown)
       document.removeEventListener('keydown', onKeyDown)
+      compact.removeEventListener('change', onResize)
     }
   }, [menu])
   async function signOut() {
@@ -71,36 +80,37 @@ export function Header({ kind }: { kind: 'home' | 'auth' | 'portal' }) {
     setSigningOut(true)
     try {
       await api('session/', { method: 'DELETE' })
+      await navigate('/', { replace: true, flushSync: true })
       setUser(null)
       setMenu(false)
-      navigate('/')
     } catch (error) { setError(error) }
     finally { setSigningOut(false) }
   }
-  return <header ref={header} className={`site-header header-${kind}`}>
+  return <header ref={header} className="site-header"
+    onBlur={event => { if (!event.currentTarget.contains(event.relatedTarget)) setMenu(false) }}
+    onClick={event => { if (event.target instanceof Element && event.target.closest('a')) setMenu(false) }}>
     <div className="header-inner">
       <Wordmark />
-      {kind !== 'auth' && <>
-        <nav id="portal-navigation" className={menu ? 'portal-nav open' : 'portal-nav'} aria-label="Разделы портала">
+      {kind !== 'auth' &&
+        <nav ref={nav} id="portal-navigation" className={menu ? 'portal-nav open' : 'portal-nav'} aria-label="Разделы портала">
           {kind === 'home' ? <>
-            <a href="#project" onClick={() => setMenu(false)}>О проекте</a>
-            <a href="#shtrikh" onClick={() => setMenu(false)}>Штрих</a>
-            <a href="#audience" onClick={() => setMenu(false)}>Для кого</a>
+            <Link to="#project">О проекте</Link>
+            <Link to="#shtrikh">Штрих</Link>
+            <Link to="#audience">Для кого</Link>
           </> : <>
-            <HeaderLink to="/profile/" onClick={() => setMenu(false)}>Кабинет</HeaderLink>
-            <HeaderLink to="/signs/" onClick={() => setMenu(false)}>Знаки ПДД</HeaderLink>
-            <HeaderLink to="/practice/" onClick={() => setMenu(false)}>Практика</HeaderLink>
-            <HeaderLink to="/safe-route/" onClick={() => setMenu(false)}>Маршрут</HeaderLink>
+            <HeaderLink to="/profile/">Кабинет</HeaderLink>
+            <HeaderLink to="/signs/">Знаки ПДД</HeaderLink>
+            <HeaderLink to="/practice/">Практика</HeaderLink>
+            <HeaderLink to="/safe-route/">Маршрут</HeaderLink>
           </>}
-          <HeaderLink to="/news/" onClick={() => setMenu(false)}>Новости</HeaderLink>
+          <HeaderLink to="/news/">Новости</HeaderLink>
           {kind === 'portal' && <>
-            <HeaderLink to="/rating/" onClick={() => setMenu(false)}>Рейтинг</HeaderLink>
-            {user?.role === 'child' && <HeaderLink to="/age/" onClick={() => setMenu(false)}>Тесты</HeaderLink>}
-            {user?.role === 'teacher' && <HeaderLink to="/pdd-teacher/" onClick={() => setMenu(false)}>Отчёты</HeaderLink>}
+            <HeaderLink to="/rating/">Рейтинг</HeaderLink>
+            {user?.role === 'child' && <HeaderLink to="/age/">Тесты</HeaderLink>}
+            {user?.role === 'teacher' && <HeaderLink to="/pdd-teacher/">Отчёты</HeaderLink>}
             {user && <button className="button button-light mobile-signout" type="button" disabled={signingOut} onClick={signOut}>Выйти</button>}
           </>}
-        </nav>
-      </>}
+        </nav>}
       <div className="header-actions">
         {kind === 'portal' ? <>
           <MotionToggle />
@@ -116,8 +126,11 @@ export function Header({ kind }: { kind: 'home' | 'auth' | 'portal' }) {
 }
 
 export function Footer() {
-  return <footer className="site-footer">
-    <div className="footer-inner" data-scroll-reveal="quiet">
+  const footer = useRef<HTMLElement>(null)
+  const { enabled } = useMotionSettings()
+  const visible = useScrollEntrance(footer, enabled)
+  return <footer ref={footer} className="site-footer">
+    <div className="footer-inner" data-scroll-state={visible ? 'enter' : undefined}>
       <Wordmark />
       <div className="footer-links">
         <nav aria-label="Социальные сети">

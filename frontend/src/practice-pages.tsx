@@ -2,7 +2,7 @@ import { useId, useRef, useState } from 'react'
 import type { FormEvent } from 'react'
 import { Form, useParams, useSearchParams } from 'react-router-dom'
 import * as Tabs from '@radix-ui/react-tabs'
-import { AnimatePresence, Reorder, useDragControls, useMotionValue, useSpring } from 'motion/react'
+import { AnimatePresence, useDragControls, useMotionValue, useSpring } from 'motion/react'
 import * as m from 'motion/react-m'
 import { api } from './api'
 import type { GalleryImage } from './api'
@@ -77,7 +77,7 @@ function PracticeCatalogCard({ item }: { item: ExerciseCard }) {
       </m.div>
       <h2>{item.title}</h2>
       <p>{featured.find(card => card.slug === item.slug)?.text ?? `${item.topic} · ${item.difficulty}`}</p>
-      <ButtonLink to={path}>Начать задание <span aria-hidden="true">→</span></ButtonLink>
+      <ButtonLink to={path} viewTransition>Начать задание <span aria-hidden="true">→</span></ButtonLink>
     </m.article>
   </Reveal>
 }
@@ -86,7 +86,7 @@ export function PracticeExercisePage() {
   const { slug } = useParams()
   const { data, error, retry } = useResource<Exercise>()
   return <>
-    <Link to="/practice/" className="text-link">← К практике</Link>
+    <Link to="/practice/" className="text-link" viewTransition>← К практике</Link>
     {error ? <LoadError error={error} retry={retry} /> : !data || !slug ? <Loading /> : <>
       <PortalHeading title={data.title}>{data.preview ? 'Предпросмотр версии' : data.prompt}</PortalHeading>
       <ExerciseForm key={data.version} exercise={data} slug={slug} />
@@ -223,10 +223,10 @@ function ExerciseForm({ exercise, slug }: { exercise: Exercise; slug: string }) 
         {exercise.kind === 'order' ? <>
           <h2>Расставь действия по порядку</h2>
           <p>Перетащи карточки или передвинь их стрелками.</p>
-          <Reorder.Group as="ol" axis="y" values={cards} onReorder={reorder} className="order-cards">
+          <m.Reorder.Group as="ol" axis="y" values={cards} onReorder={reorder} className="order-cards">
             {cards.map((card, index) => <OrderCard key={card.id} card={card} index={index} total={cards.length}
               pending={pending} onMove={move} onDrop={() => setStatus(`«${card.text}» теперь на позиции ${index + 1}.`)} />)}
-          </Reorder.Group>
+          </m.Reorder.Group>
           <span className="learning-live" role="status">{status}</span>
         </> : <>
           <h2>Что меняет табличка?</h2>
@@ -266,7 +266,7 @@ function OrderCard({ card, index, total, pending, onMove, onDrop }: {
   const lean = useMotionValue(0)
   const rotate = useSpring(lean, { stiffness: 270, damping: 19 })
   const [landings, setLandings] = useState(0)
-  return <Reorder.Item value={card} dragListener={false} dragControls={drag} dragMomentum={false}
+  return <m.Reorder.Item value={card} dragListener={false} dragControls={drag} dragMomentum={false}
     style={enabled ? { rotate } : undefined}
     whileHover={enabled && !pending ? { scale: 1.035 } : undefined}
     whileDrag={enabled ? { scale: 1.09, backgroundColor: '#f0e7fb', borderColor: '#8469bc', boxShadow: '0 14px 27px #322d4d45' } : undefined}
@@ -284,7 +284,7 @@ function OrderCard({ card, index, total, pending, onMove, onDrop }: {
       <button type="button" className="button button-light" aria-label={'Ниже. ' + card.text}
         disabled={index === total - 1 || pending} onClick={() => onMove(index, index + 1)}>⌄</button>
     </div>
-  </Reorder.Item>
+  </m.Reorder.Item>
 }
 
 function AnswerChoices({ label, items, value, disabled, onChange }: {

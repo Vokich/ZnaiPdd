@@ -16,19 +16,24 @@ const revealOffsets = {
 }
 const revealed = { opacity: 1, x: 0, y: 0, rotate: 0, scale: 1 }
 
-export function useScrollEntrance(anchor: RefObject<HTMLElement | null>, enabled: boolean, amount = .12) {
+export function useScrollEntrance(anchor: RefObject<HTMLElement | null>, enabled: boolean) {
   const canObserve = typeof IntersectionObserver !== 'undefined'
   const [entered, setEntered] = useState(false)
   useEffect(() => {
     const element = anchor.current
     if (!element || !enabled || !canObserve) return
-    const observer = new IntersectionObserver(([entry]) => {
-      if (!entry.isIntersecting) setEntered(false)
-      else if (entry.intersectionRatio >= amount) setEntered(true)
-    }, { threshold: [0, amount] })
+    const observer = new IntersectionObserver(entries => {
+      for (const entry of entries) {
+        if (!entry.isIntersecting) {
+          setEntered(false)
+        } else if (entry.intersectionRatio >= .15) {
+          setEntered(true)
+        }
+      }
+    }, { threshold: [0, .15] })
     observer.observe(element)
     return () => observer.disconnect()
-  }, [anchor, amount, canObserve, enabled])
+  }, [anchor, canObserve, enabled])
   return !enabled || !canObserve || entered
 }
 
@@ -49,7 +54,7 @@ export function Reveal({ children, className, delay = 0, from = 'quiet' }: {
   const anchor = useRef<HTMLDivElement>(null)
   const { enabled } = useMotionSettings()
   const visible = useScrollEntrance(anchor, enabled)
-  return <div ref={anchor} className={className}>
+  return <div ref={anchor} className={className} data-entered={enabled && visible || undefined}>
     <m.div className="reveal-content" initial={false}
       animate={visible ? revealed : revealOffsets[from]}
       transition={enabled && visible ? from === 'quiet'

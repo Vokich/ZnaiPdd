@@ -1,4 +1,4 @@
-import { StrictMode, useEffect, useRef, useState } from 'react'
+import { StrictMode, useEffect, useLayoutEffect, useRef, useState } from 'react'
 import type { ComponentType, ReactNode, RefObject } from 'react'
 import { createRoot } from 'react-dom/client'
 import { createBrowserRouter, Navigate, Outlet, RouterProvider, ScrollRestoration, useLocation, useNavigation, useNavigationType, useViewTransitionState } from 'react-router-dom'
@@ -19,7 +19,7 @@ function Gate({ children, role }: { children: ReactNode; role?: Role }) {
   const location = useLocation()
   if (error && user === undefined) return <LoadError error={error} retry={refresh} />
   if (user === undefined) return <Loading />
-  if (!user) return <Navigate to="/login/" state={{ next: location.pathname + location.search }} replace />
+  if (!user) return <Navigate to="/login/" state={{ next: location.pathname + location.search + location.hash }} replace />
   if (role && user.role !== role) return <div className="panel status-panel"><h1>Раздел недоступен</h1><ButtonLink to="/profile/">В мой кабинет →</ButtonLink></div>
   return children
 }
@@ -48,18 +48,32 @@ function Page({ pathname, portal, pending, main }: { pathname: string; portal: b
 }
 
 function App() {
-  const { pathname } = useLocation()
+  const { pathname, hash, key } = useLocation()
   const navigation = useNavigationType()
   const pending = useNavigation().state !== 'idle'
   const site = useRef<HTMLDivElement>(null)
   const main = useRef<HTMLElement>(null)
   const previousPath = useRef(pathname)
-  const isBack = navigation === 'POP' || pathname.length < previousPath.current.length && previousPath.current.startsWith(pathname)
+  const previousIndex = useRef<number | undefined>(window.history.state?.idx)
   const home = pathname === '/'
+  const sectionNavigation = home && !!hash && navigation !== 'POP'
   const auth = /^\/(login|reg)\/?$/.test(pathname)
   const kind = home ? 'home' : auth ? 'auth' : 'portal'
   const { enabled } = useMotionSettings()
   useViewportMotion(site, pathname, enabled)
+
+  useLayoutEffect(() => {
+    const index: number | undefined = window.history.state?.idx
+    const back = navigation === 'POP'
+      ? index !== undefined && previousIndex.current !== undefined && index < previousIndex.current
+      : pathname !== previousPath.current && previousPath.current.startsWith(pathname.endsWith('/') ? pathname : pathname + '/')
+    if (site.current) site.current.dataset.direction = back ? 'back' : 'forward'
+    previousIndex.current = index
+  }, [key, pathname, navigation])
+
+  useEffect(() => {
+    if (sectionNavigation) document.getElementById(hash.slice(1))?.focus({ preventScroll: true })
+  }, [sectionNavigation, hash, key])
 
   useEffect(() => {
     const changed = previousPath.current !== pathname
@@ -69,7 +83,8 @@ function App() {
     document.title = title && !home ? title + ' — Знай ПДД' : 'Знай ПДД'
   }, [pathname, home, navigation])
 
-  return <div ref={site} className={`site site-${kind}`} data-motion={enabled ? 'on' : 'off'} data-direction={isBack ? 'back' : 'forward'}>
+  return <div ref={site} className={`site site-${kind}`} data-motion={enabled ? 'on' : 'off'}
+    data-section-navigation={sectionNavigation || undefined}>
     <a className="skip-link" href="#main">К содержанию</a>
     {pending && <div className="navigation-progress" aria-hidden="true" />}
     <Header kind={kind} />
