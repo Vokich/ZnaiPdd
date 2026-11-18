@@ -66,6 +66,7 @@ export type ProfileResponse = {
 }
 export type Quiz = { passing_score: number; questions: { id: number; text: string; options: string[] }[] }
 export type LessonReport = {
+  classroom: { id: string; title: string; lesson: string; submitted: number | null } | null
   id: number; lesson_date: string; location: string; participants_count: number; organization: Organization | null
   route_level: string; completed_count: number | null
   practice: { id: number; title: string; slug: string } | null

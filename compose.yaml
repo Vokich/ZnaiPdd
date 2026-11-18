@@ -7,6 +7,7 @@ x-backend: &backend
   stop_grace_period: 30s
 
 x-superuser-env: &superuser-env
+  CLASSROOM_REVIEW_HOURS: ${CLASSROOM_REVIEW_HOURS:-24}
   DJANGO_SUPERUSER_USERNAME: ${DJANGO_SUPERUSER_USERNAME:-}
   DJANGO_SUPERUSER_PASSWORD: ${DJANGO_SUPERUSER_PASSWORD:-}
 
@@ -64,6 +65,18 @@ services:
           path: ./requirements-prod.txt
         - action: rebuild
           path: ./requirements.txt
+
+  classroom-cleanup-dev:
+    <<: *backend
+    profiles: [dev]
+    depends_on:
+      api-dev:
+        condition: service_healthy
+    command: [python, manage.py, cleanup_classroom, --watch]
+    environment:
+      POSTGRES_HOST: db-dev
+      POSTGRES_PASSWORD: znaipdd-dev
+      CLASSROOM_REVIEW_HOURS: ${CLASSROOM_REVIEW_HOURS:-24}
 
   frontend-dev:
     profiles: [dev]
@@ -140,6 +153,19 @@ services:
       interval: 30s
       timeout: 5s
       retries: 3
+
+  classroom-cleanup:
+    <<: *backend
+    profiles: [prod]
+    restart: unless-stopped
+    depends_on:
+      web:
+        condition: service_healthy
+    command: [python, manage.py, cleanup_classroom, --watch]
+    environment:
+      POSTGRES_HOST: db
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-}
+      CLASSROOM_REVIEW_HOURS: ${CLASSROOM_REVIEW_HOURS:-24}
 
   caddy:
     profiles: [prod]

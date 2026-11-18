@@ -103,6 +103,7 @@ else:
         'default': {
             'ENGINE': 'django.db.backends.sqlite3',
             'NAME': os.environ.get('DJANGO_DB_PATH', BASE_DIR / 'db.local.sqlite3'),
+            'OPTIONS': {'transaction_mode': 'IMMEDIATE'},
         }
     }
 
@@ -131,6 +132,7 @@ AUTH_PASSWORD_VALIDATORS = [
 LANGUAGE_CODE = 'ru-ru'
 
 TIME_ZONE = 'Europe/Moscow'
+CLASSROOM_REVIEW_HOURS = int(os.environ.get('CLASSROOM_REVIEW_HOURS', '24'))
 
 USE_I18N = True
 

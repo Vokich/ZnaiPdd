@@ -1,9 +1,15 @@
 from django.urls import path
 
-from . import api, news_api, practice_api, rating_api, route_api
+from . import api, classroom_quizzes, classroom_runs, news_api, practice_api, rating_api, route_api
 
 
 urlpatterns = [
+    path('classroom/', classroom_runs.classroom),
+    path('classroom/tests/', classroom_quizzes.quizzes),
+    path('classroom/tests/<int:pk>/', classroom_quizzes.quiz_detail),
+    path('classroom/runs/<uuid:pk>/', classroom_runs.teacher_run),
+    path('classroom/runs/<uuid:pk>/qr/', classroom_runs.qr_image),
+    path('classroom/join/<slug:code>/', classroom_runs.participant),
     path('health/', api.health, name='api_health'),
     path('session/', api.session, name='api_session'),
     path('users/', api.register, name='api_register'),

@@ -1,0 +1,25 @@
+.class-nav, .class-actions { display: flex; flex-wrap: wrap; align-items: center; gap: .8rem; margin-block: 1rem; }
+.class-list, .class-questions, .class-editor { display: grid; gap: 1.1rem; }
+.class-list { grid-template-columns: repeat(auto-fit, minmax(min(100%, 20rem), 1fr)); }
+.class-panel { margin-block: 1rem; overflow-wrap: anywhere; }
+.class-panel h2 { margin-block: .2rem .8rem; }
+.class-question { min-width: 0; margin: 0; }
+.class-question legend { font-weight: 750; padding: 0 .35rem; max-width: 100%; overflow-wrap: anywhere; }
+.class-question .answer { margin-block: .5rem; overflow-wrap: anywhere; }
+.class-editor label { display: grid; gap: .35rem; }
+.class-editor input:not([type=radio]), .class-editor textarea, .class-editor select, .class-code-input {
+  width: 100%; padding: .7rem; font: inherit; color: inherit; border: 1px solid #827b92; border-radius: .6rem; background: white;
+}
+.class-editor textarea { resize: vertical; }
+.class-option { display: grid; grid-template-columns: auto minmax(0,1fr) auto; gap: .55rem; align-items: center; }
+.class-option input[type=radio] { width: 1.25rem; height: 1.25rem; }
+.class-qr { background: white; width: min(100%, 19rem); aspect-ratio: 1; display: block; }
+.class-code { font-size: clamp(2rem, 7vw, 4rem); letter-spacing: .12em; font-variant-numeric: tabular-nums; }
+.class-sign { width: min(100%, 9rem); max-height: 10rem; object-fit: contain; }
+.class-stats { display: flex; flex-wrap: wrap; gap: 1.5rem; }
+.class-stats dd { margin: 0; font-size: 2rem; font-weight: bold; }
+.class-stage { font-size: clamp(1.1rem, 2vw, 1.6rem); }
+.class-stage canvas { width: min(100%, 36rem); height: auto; }
+.class-stage .order-cards { max-width: 52rem; }
+.class-stage :focus-visible, .class-question :focus-visible { outline: 3px solid #59439a; outline-offset: 2px; }
+.class-join { max-width: 32rem; }

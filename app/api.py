@@ -1,6 +1,7 @@
 from datetime import date
 from io import BytesIO
 from random import shuffle
+from uuid import UUID
 
 from django.contrib.auth import authenticate, login, logout, update_session_auth_hash
 from django.contrib.auth.models import User
@@ -9,6 +10,7 @@ from django.db.models import Case, F, Value, When
 from django.forms import DateField
 from django.http import FileResponse
 from django.shortcuts import get_object_or_404
+from django.utils import timezone
 from django.views.decorators.cache import never_cache
 from django.views.decorators.csrf import ensure_csrf_cookie
 from rest_framework.decorators import api_view, permission_classes
@@ -18,6 +20,7 @@ from rest_framework.response import Response
 
 from .access import account_role, can_submit_lesson_reports, is_child
 from .certificate_generator import CertificateGenerator
+from .classroom_lessons import run_title
 from .forms import (
     AdultPddTestForm,
     JuniorPddTestForm,
@@ -28,7 +31,7 @@ from .forms import (
     UserProfileForm,
     UserRegistrationForm,
 )
-from .models import Certificate, Organization, RoadSign, TeacherLessonReport, TestResult
+from .models import Certificate, ClassroomRun, Organization, RoadSign, TeacherLessonReport, TestResult
 from .municipalities import search_municipalities
 from .practice import exercise_card, public_exercises, related_exercises
 from .rating import rating_overview
@@ -120,7 +123,13 @@ def selected_result(request, results):
 
 
 def report_data(report):
+    run = report.classroom
+    classroom = None
+    if run:
+        classroom = {'id': run.pk, 'title': run_title(run), 'lesson': run.lesson,
+                     'submitted': run.summary.get('submitted')}
     return {
+        'classroom': classroom,
         'id': report.pk,
         'lesson_date': report.lesson_date,
         'location': report.location,
@@ -394,11 +403,27 @@ def lesson_report_options(request):
 def lesson_reports(request):
     require_report_access(request.user)
     if request.method == 'GET':
-        reports = request.user.lesson_reports.select_related('organization__municipality', 'practice')
+        reports = request.user.lesson_reports.select_related('organization__municipality', 'practice', 'classroom__version')
         return Response([report_data(report) for report in reports])
-    report = checked(TeacherLessonReportForm(object_data(request))).save(commit=False)
-    report.user = request.user
-    report.save()
+    data = object_data(request)
+    report = TeacherLessonReport(user=request.user)
+    with transaction.atomic():
+        if 'classroom' in data:
+            try:
+                run_id = UUID(str(data['classroom']))
+            except ValueError:
+                raise ValidationError({'detail': 'Выберите занятие.'})
+            run = get_object_or_404(ClassroomRun.objects.select_for_update(), pk=run_id, owner=request.user)
+            existing = TeacherLessonReport.objects.filter(classroom=run).first()
+            if existing:
+                return Response(report_data(existing))
+            if run.version_id and not run.closed_at:
+                raise ValidationError({'detail': 'Сначала закройте сессию теста.'})
+            report.classroom = run
+            if run.lesson:
+                run.closed_at = timezone.now()
+                run.save(update_fields=['closed_at'])
+        report = checked(TeacherLessonReportForm(data, instance=report)).save()
     return Response(report_data(report), status=201)
 
 
@@ -416,7 +441,7 @@ def lesson_report(request, report_id):
         for field in ('lesson_date', 'location', 'participants_count', 'route_level'):
             data.setdefault(field, getattr(report, field))
         data.setdefault('practice', report.practice_id)
-        data.setdefault('completed_count', report.completed_count if data['route_level'] or data['practice'] else None)
+        data.setdefault('completed_count', report.completed_count if report.classroom_id or data['route_level'] or data['practice'] else None)
         data.setdefault('organization', report.organization_id)
         report = checked(TeacherLessonReportForm(data, instance=report)).save()
     return Response(report_data(report))

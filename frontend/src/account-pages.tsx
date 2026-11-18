@@ -3,7 +3,7 @@ import type { FormEvent } from 'react'
 import type { LoaderFunctionArgs } from 'react-router-dom'
 import { Link, useNavigate } from './navigation'
 import { api } from './api'
-import type { LessonReport, Profile, ProfileResponse } from './api'
+import type { LessonReport, Organization, Profile, ProfileResponse } from './api'
 import { useResource, useSession } from './state'
 import { ButtonLink, Feedback, Field, FieldErrors, formatDate, Loading, LoadError, OrganizationField, PortalHeading, PracticeIcon } from './ui'
 import { quizInfo } from './quiz-info'
@@ -76,6 +76,11 @@ export function AccountPage() {
       <Mascot className="profile-mascot" />
     </div>
     <div className="portal-grid account-links">
+      {profile.role === 'teacher' && <>
+        <Link className="panel route-card" to="/classroom/"><h2>Провести урок</h2><p>Разберите дорожную ситуацию вместе с классом.</p><span aria-hidden="true">→</span></Link>
+        <Link className="panel route-card" to="/classroom/tests/"><h2>Мои тесты</h2><p>Подготовьте вопросы и запустите тест по QR.</p><span aria-hidden="true">→</span></Link>
+        <Link className="panel route-card" to="/classroom/history/"><h2>История запусков</h2><p>Откройте занятие, его сводку или отчёт.</p><span aria-hidden="true">→</span></Link>
+      </>}
       {profile.role === 'child' && <Link className="panel route-card" data-scroll-reveal="card" to="/age/"><h2>Тесты по ПДД</h2><p>Выберите тест для своей возрастной группы.</p><span aria-hidden="true">→</span></Link>}
       {profile.role === 'teacher' && <Link className="panel route-card" data-scroll-reveal="card" to="/pdd-teacher/"><h2>Отчёты об уроках</h2><p>Мои отчёты · {reports_count}</p><span aria-hidden="true">→</span></Link>}
       {profile.role === 'admin' && <a className="panel route-card" href="/admin/"><h2>Админ-панель</h2><span aria-hidden="true">→</span></a>}
@@ -202,6 +207,7 @@ export function TeacherPage() {
             <span>
               <strong>{report.organization?.name || report.location || 'Место не указано'}</strong>
               <small>{formatDate(report.lesson_date)} · {report.participants_count} чел.</small>
+              {report.classroom && <small>{report.classroom.title} · {report.classroom.lesson ? 'Разобрали вместе' : 'Тест по QR · отправлено ' + report.classroom.submitted}</small>}
               {(report.route_level || report.practice) && <small>
                 {report.practice?.title ?? data.options.routes.find(route => route.id === report.route_level)?.title} · завершили {report.completed_count} чел.
               </small>}
@@ -224,7 +230,12 @@ export function TeacherReportPage() {
   </>
 }
 
-function ReportForm({ report, options, onSave }: { report?: LessonReport; options: ReportOptions; onSave: () => void }) {
+type ClassroomReport = NonNullable<LessonReport['classroom']> & { date: string; organization: Organization | null }
+
+export function ReportForm({ report, classroom, options, onSave }: {
+  report?: LessonReport; classroom?: ClassroomReport; options: ReportOptions; onSave: (saved: LessonReport) => void
+}) {
+  const session = report?.classroom || classroom
   const [pending, setPending] = useState(false)
   const [error, setError] = useState<unknown>()
   const [activity, setActivity] = useState(report?.practice ? 'practice:' + report.practice.id
@@ -242,13 +253,13 @@ function ReportForm({ report, options, onSave }: { report?: LessonReport; option
     const data = {
       ...Object.fromEntries(new FormData(event.currentTarget)), route_level: route,
       practice: activity.startsWith('practice:') ? Number(activity.slice(9)) : null,
+      ...(classroom && { classroom: classroom.id }),
     }
     setPending(true)
     setError(undefined)
     try {
       const path = report ? 'lesson-reports/' + report.id + '/' : 'lesson-reports/'
-      await api<LessonReport>(path, { method: report ? 'PATCH' : 'POST', data })
-      onSave()
+      onSave(await api<LessonReport>(path, { method: report ? 'PATCH' : 'POST', data }))
     } catch (error) {
       setError(error)
     } finally {
@@ -258,14 +269,15 @@ function ReportForm({ report, options, onSave }: { report?: LessonReport; option
 
   return <form className="panel editor" onSubmit={submit}>
     {!report && <h2>Новый отчёт</h2>}
+    {session && <><h2>{session.title}</h2><p>{session.lesson ? 'Разобрали вместе' : 'Тест по QR · отправлены попытки — ' + session.submitted}</p></>}
     <div className="field-grid" data-scroll-fields="">
-      <Field label="Дата урока" name="lesson_date" type="date" defaultValue={report?.lesson_date} required error={error} />
-      <Field label="Количество участников" name="participants_count" type="number" min={1} max={2147483647}
+      <Field label="Дата урока" name="lesson_date" type="date" defaultValue={report?.lesson_date ?? classroom?.date} required error={error} />
+      <Field label={session ? 'Присутствовали' : 'Количество участников'} name="participants_count" type="number" min={1} max={2147483647}
         value={participantCount} onChange={event => setParticipantCount(event.target.value)} required error={error} />
-      <OrganizationField value={report?.organization} error={error} />
+      <OrganizationField value={report?.organization ?? classroom?.organization} error={error} />
       <Field label="Площадка или кабинет" name="location" defaultValue={report?.location}
         placeholder="Например, школа № 1, кабинет 204" maxLength={300} wide error={error} />
-      <div className="field">
+      {!session && <div className="field">
         <label htmlFor="lesson-activity">Что проходили на уроке</label>
         <select id="lesson-activity" value={activity} onChange={event => setActivity(event.target.value)}>
           <option value="">Урок без задания</option>
@@ -278,9 +290,11 @@ function ReportForm({ report, options, onSave }: { report?: LessonReport; option
         </select>
         <FieldErrors name="route_level" error={error} />
         <FieldErrors name="practice" error={error} />
-      </div>
-      {activity && <Field label="Сколько участников завершили задание" name="completed_count" type="number"
-        min={0} max={participantCount || undefined} defaultValue={report?.completed_count ?? ''} required error={error} />}
+      </div>}
+      {(activity || session && !session.lesson) && <Field label={session ? 'Завершили по подсчёту педагога (необязательно)' : 'Сколько участников завершили задание'} name="completed_count" type="number"
+        min={0} max={participantCount || undefined} defaultValue={report?.completed_count ?? ''} required={!!activity} error={error} />}
+      {session?.submitted != null && participantCount && session.submitted > Number(participantCount) &&
+        <p role="status">Попыток больше, чем присутствовавших. Проверьте количество участников перед сохранением.</p>}
       {activityLink && <Link className="text-link" to={activityLink}
         target="_blank" rel="noopener">Открыть задание в новой вкладке ↗</Link>}
     </div>
@@ -288,6 +302,7 @@ function ReportForm({ report, options, onSave }: { report?: LessonReport; option
     <div className="actions" data-scroll-reveal="quiet">
       <button className="button" disabled={pending}>Сохранить отчёт</button>
       {report && <ButtonLink light to="/pdd-teacher/">К отчётам</ButtonLink>}
+      {session && <ButtonLink light to={'/classroom/runs/' + session.id + '/'}>К занятию</ButtonLink>}
     </div>
   </form>
 }

@@ -203,7 +203,7 @@ class TeacherLessonReportAdmin(admin.ModelAdmin):
     list_filter = ('lesson_date', 'route_level', 'created_at')
     search_fields = ('user__username', 'organization__name', 'location')
     date_hierarchy = 'lesson_date'
-    readonly_fields = ('created_at', 'certificate_generated')
+    readonly_fields = ('created_at', 'certificate_generated', 'classroom_info')
     autocomplete_fields = ('user', 'organization')
     list_per_page = 30
 
@@ -213,9 +213,18 @@ class TeacherLessonReportAdmin(admin.ModelAdmin):
     fieldsets = (
         ('Педагог', {'fields': ('user',)}),
         ('Урок', {'fields': ('lesson_date', 'organization', 'location', 'participants_count')}),
-        ('Учебное задание', {'fields': ('route_level', 'practice', 'completed_count')}),
+        ('Учебное задание', {'fields': ('classroom_info', 'route_level', 'practice', 'completed_count')}),
         ('Служебное', {'fields': ('created_at', 'certificate_generated'), 'classes': ('collapse',)}),
     )
+
+    @admin.display(description='Занятие')
+    def classroom_info(self, obj):
+        if not obj or not obj.classroom_id:
+            return 'Ручной отчёт'
+        from .classroom_lessons import run_title
+        run = obj.classroom
+        mode = 'Разобрали вместе' if run.lesson else f'Тест по QR · отправлено {run.summary["submitted"]}'
+        return f'{run_title(run)} · {mode}'
 
 
 @admin.register(Certificate)

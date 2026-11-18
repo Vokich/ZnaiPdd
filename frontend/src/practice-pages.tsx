@@ -257,7 +257,7 @@ function ExerciseForm({ exercise, slug }: { exercise: Exercise; slug: string }) 
   </Tabs.Root>
 }
 
-function OrderCard({ card, index, total, pending, onMove, onDrop }: {
+export function OrderCard({ card, index, total, pending, onMove, onDrop }: {
   card: Choice; index: number; total: number; pending: boolean
   onMove: (from: number, to: number) => void; onDrop: () => void
 }) {

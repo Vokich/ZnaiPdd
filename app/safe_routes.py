@@ -81,6 +81,11 @@ def choice(key, label, target, feedback=''):
     return {'id': key, 'label': label, 'target': target, 'feedback': feedback}
 
 
+def scene_choices(scene, following):
+    return [choice(key, label, following if index == 0 else None, explanation)
+            for index, (key, label, explanation) in enumerate(SCENES[scene][3])]
+
+
 def legacy_scenes(level, random):
     if level == 'pedestrian':
         scenes = ['signal', random.choice(['visibility', 'zebra'])]
@@ -142,13 +147,10 @@ def district(level, seed, version=VERSION):
                 ]
                 edges.extend([(key, branch), (branch, following)])
         else:
-            label, description, rule, options = SCENES[scene]
+            label, description, rule, _ = SCENES[scene]
             y = random.choice([44, 57]) if level == 'detour' else random.choice([27, 47, 69])
             result[key] = point(label, x, y, text=description, rule=rule, decision=True, kind=scene, travel=travel)
-            result[key]['choices'] = [
-                choice(action, title, following if option == 0 else None, feedback)
-                for option, (action, title, feedback) in enumerate(options)
-            ]
+            result[key]['choices'] = scene_choices(scene, following)
             edges.append((key, following))
             if scene == 'dismount':
                 travel = 'walk-bike'

@@ -99,6 +99,9 @@ const quizzes = () => import('./quiz-pages')
 const signs = () => import('./sign-pages')
 const practice = () => import('./practice-pages')
 const news = () => import('./news-pages')
+const classroom = () => import('./classroom-pages')
+const classroomTests = () => import('./classroom-tests')
+const joining = () => import('./classroom-join')
 
 function lazyPage(load: () => Promise<ComponentType>, gate?: true | Role) {
   return async () => {
@@ -115,6 +118,17 @@ const router = createBrowserRouter([{
     { path: '/road-circuit/', lazy: lazyPage(() => import('./road-circuit').then(module => module.RoadCircuitPage)) },
     { path: '/login/', element: <LoginPage /> },
     { path: '/reg/', element: <RegisterPage /> },
+    { path: '/join/', lazy: lazyPage(() => joining().then(m => m.JoinPage)) },
+    { path: '/join/:code/', loader: loadResource(({ params }) => 'classroom/join/' + params.code + '/'),
+      lazy: lazyPage(() => joining().then(m => m.JoinSessionPage)) },
+    ...['/classroom/', '/classroom/history/'].map(path => ({ path, loader: loadResource('classroom/'),
+      lazy: lazyPage(() => classroom().then(m => m.ClassroomPage), 'teacher') })),
+    ...['/classroom/runs/:id/', '/classroom/runs/:id/report/'].map(path => ({ path,
+      loader: loadResource(({ params }) => 'classroom/runs/' + params.id + '/'),
+      lazy: lazyPage(() => classroom().then(m => m.ClassroomRunPage), 'teacher') })),
+    { path: '/classroom/tests/', loader: loadResource('classroom/tests/'), lazy: lazyPage(() => classroomTests().then(m => m.ClassroomTestsPage), 'teacher') },
+    { path: '/classroom/tests/:id/', loader: loadResource(({ params }) => 'classroom/tests/' + params.id + '/'),
+      lazy: lazyPage(() => classroomTests().then(m => m.ClassroomTestPage), 'teacher') },
     { path: '/privacy-policy/', element: <PrivacyPage /> },
     { path: '/profile/', loader: loadResource('profile/'), lazy: lazyPage(() => account().then(module => module.AccountPage), true) },
     { path: '/profile/edit/', loader: loadResource('profile/'), lazy: lazyPage(() => account().then(module => module.EditProfilePage), true) },

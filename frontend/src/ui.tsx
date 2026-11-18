@@ -133,7 +133,8 @@ export function Footer() {
     <div className="footer-inner" data-scroll-state={visible ? 'enter' : undefined}>
       <Wordmark />
       <div className="footer-links">
-        <nav aria-label="Социальные сети">
+        <nav aria-label="Полезные ссылки">
+          <Link to="/join/">Присоединиться по коду</Link>
           <a href="https://vk.ru/media_uid_lo" target="_blank" rel="noreferrer">Медиа ЮИД ↗</a>
           <a href="https://vk.ru/lab48" target="_blank" rel="noreferrer">Лаборатория 48 ↗</a>
         </nav>
