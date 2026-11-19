@@ -55,7 +55,7 @@ export type Profile = User & {
 export type QuizType = 'junior' | 'teen' | 'adult'
 export type QuizResult = {
   id: number; test_type: QuizType; score: number; total: number; passing_score: number
-  passed: boolean; completed_at: string
+  passed: boolean; earns_diploma: boolean; completed_at: string
 }
 export type RatingOverview = {
   points: number; maximum: number; directions: { id: 'routes' | 'tests' | 'practice'; points: number }[]
@@ -64,7 +64,7 @@ export type ProfileResponse = {
   profile: Profile; results: QuizResult[]; reports_count: number; rating: RatingOverview
   suggested_practice: { slug: string; title: string; kind_id: string; topic: string }[]
 }
-export type Quiz = { passing_score: number; questions: { id: number; text: string; options: string[] }[] }
+export type Quiz = { revision: string; passing_score: number; questions: { id: number; text: string; options: string[] }[] }
 export type LessonReport = {
   classroom: { id: string; title: string; lesson: string; submitted: number | null } | null
   id: number; lesson_date: string; location: string; participants_count: number; organization: Organization | null

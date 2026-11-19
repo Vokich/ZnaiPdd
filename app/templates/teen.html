@@ -14,15 +14,18 @@
             {% endif %}
         </div>
         <p style="margin-top: 15px; opacity: 0.9;">
-            Вопросов: 30 | За прохождение теста от 60% до 80% правильных ответов вы получаете сертификат.</br> Больше 80% вы получаете диплом.
+            {% if unavailable %}В этом тесте пока нет вопросов.{% else %}Вопросов: {{ form.questions_data|length }}. Для сертификата нужно набрать не менее 60% правильных ответов, для диплома — не менее 80%.{% endif %}
         </p>
     </div>
 
+    {% if updated %}<p role="alert">Вопросы изменились. Перед вами обновлённый тест. Выберите ответы заново.</p>{% endif %}
+    {% if not unavailable %}
     <div class="progress-container">
         <div class="progress-bar" id="progressBar"></div>
     </div>
     <form method="post" id="pddForm">
         {% csrf_token %}
+        <input type="hidden" name="revision" value="{{ form.revision }}">
 
         {% for field in form %}
             <div class="question-card">
@@ -32,7 +35,7 @@
                         <label class="option-label">
                             {{ choice.tag }}
                             <span>
-                                {% if forloop.counter == 1 %}А.{% elif forloop.counter == 2 %}Б.{% else %}В.{% endif %}
+                                {{ forloop.counter }}.
                                 {{ choice.choice_label }}
                             </span>
                         </label>
@@ -46,6 +49,7 @@
         {% endfor %}
         <button type="submit" class="btn-finish">Завершить тест</button>
     </form>
+    {% endif %}
 </div>
 
 <script>
@@ -53,6 +57,7 @@
         const form = document.getElementById('pddForm');
         const progressBar = document.getElementById('progressBar');
         const totalQuestions = {{ form.fields|length }};
+        if (!form) return;
 
         const labels = document.querySelectorAll('.option-label');
 

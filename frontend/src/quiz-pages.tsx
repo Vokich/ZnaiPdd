@@ -24,10 +24,10 @@ export function QuizzesPage() {
 export function QuizPage({ type }: { type: QuizType }) {
   const { data, error, retry } = useResource<Quiz>()
   if (error) return <LoadError error={error} retry={retry} />
-  return data ? <QuizForm type={type} quiz={data} /> : <Loading />
+  return data ? <QuizForm key={data.revision} type={type} quiz={data} reload={retry} /> : <Loading />
 }
 
-function QuizForm({ type, quiz }: { type: QuizType; quiz: Quiz }) {
+function QuizForm({ type, quiz, reload }: { type: QuizType; quiz: Quiz; reload: () => void }) {
   const [answers, setAnswers] = useState<Record<number, number>>({})
   const [error, setError] = useState<unknown>()
   const [pending, setPending] = useState(false)
@@ -38,7 +38,7 @@ function QuizForm({ type, quiz }: { type: QuizType; quiz: Quiz }) {
     setPending(true)
     setError(undefined)
     try {
-      const result = await api<QuizResult>(`tests/${type}/results/`, { method: 'POST', data: { answers } })
+      const result = await api<QuizResult>(`tests/${type}/results/`, { method: 'POST', data: { answers, revision: quiz.revision } })
       navigate(quizInfo[type].result + '?id=' + result.id, { state: { justCompleted: true } })
     } catch (error) { setError(error) }
     finally { setPending(false) }
@@ -64,7 +64,9 @@ function QuizForm({ type, quiz }: { type: QuizType; quiz: Quiz }) {
         </fieldset>
       </div>)}
       <Feedback error={error} />
-      <button className="button" data-scroll-reveal="quiet" disabled={pending}>{pending ? 'Проверяем…' : 'Завершить тест →'}</button>
+      {error instanceof ApiError && error.status === 409
+        ? <button type="button" className="button" onClick={reload}>Открыть обновлённый тест</button>
+        : <button className="button" data-scroll-reveal="quiet" disabled={pending}>{pending ? 'Проверяем…' : 'Завершить тест →'}</button>}
     </form>
   </>
 }
@@ -95,7 +97,7 @@ export function ResultPage({ type }: { type: QuizType }) {
         <Mascot mood={result.passed ? 'success' : 'retry'} reaction={result.id} />
       </div>
       <div className="actions">
-        {result.passed && <a className="button" href={`/api/tests/${type}/certificate/?id=${result.id}`}>Скачать {result.score >= 24 ? 'диплом' : 'сертификат'} ↓</a>}
+        {result.passed && <a className="button" href={`/api/tests/${type}/certificate/?id=${result.id}`}>Скачать {result.earns_diploma ? 'диплом' : 'сертификат'} ↓</a>}
         <ButtonLink to={result.passed ? '/profile/' : quizInfo[type].path} light={result.passed}>{result.passed ? 'Мой кабинет →' : 'Пройти заново →'}</ButtonLink>
       </div>
     </section>

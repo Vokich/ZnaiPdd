@@ -9,7 +9,7 @@ from django.utils.dateparse import parse_datetime
 from django.utils.html import format_html, format_html_join
 from .access import ADMIN, account_role
 from .forms import TeacherLessonReportForm
-from .models import Certificate, Municipality, Organization, Profile, RoadSign, RouteResult, TeacherLessonReport, TestResult, UserSignProgress
+from .models import AgeTestQuestion, Certificate, Municipality, Organization, Profile, RoadSign, RouteResult, TeacherLessonReport, TestResult, UserSignProgress
 from .route_levels import LEVELS
 from . import editorial_admin
 
@@ -108,6 +108,33 @@ class OrganizationAdmin(admin.ModelAdmin):
     list_select_related = ('municipality',)
     search_fields = ('name', 'municipality__name')
     autocomplete_fields = ('municipality',)
+
+
+class AnswerLinesField(forms.CharField):
+    def prepare_value(self, value):
+        return '\n'.join(value) if isinstance(value, list) else value
+
+    def to_python(self, value):
+        return [line.strip() for line in super().to_python(value).splitlines()]
+
+
+class AgeTestQuestionForm(forms.ModelForm):
+    options = AnswerLinesField(
+        label='Варианты ответа', help_text='Введите каждый вариант с новой строки. Нумерация начинается с 1.',
+        widget=forms.Textarea(attrs={'rows': 5, 'cols': 80}),
+    )
+
+    class Meta:
+        model = AgeTestQuestion
+        fields = '__all__'
+
+
+@admin.register(AgeTestQuestion)
+class AgeTestQuestionAdmin(admin.ModelAdmin):
+    form = AgeTestQuestionForm
+    list_display = ('test_type', 'number', 'text', 'reference')
+    list_filter = ('test_type',)
+    search_fields = ('text', 'reference')
 
 
 @admin.register(TestResult)

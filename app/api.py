@@ -45,8 +45,6 @@ TEST_FORMS = {
     TestResult.TestType.TEEN: TeenPddTestForm,
     TestResult.TestType.ADULT: AdultPddTestForm,
 }
-PASSING_SCORE = 18
-DIPLOMA_SCORE = 24
 
 
 def user_data(user):
@@ -109,6 +107,7 @@ def result_data(result):
         'total': result.total_questions,
         'passing_score': result.passing_score,
         'passed': result.passed,
+        'earns_diploma': result.earns_diploma,
         'completed_at': result.completed_at,
     }
 
@@ -261,6 +260,7 @@ def password(request):
     return Response(status=204)
 
 
+@never_cache
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def test(request, test_type):
@@ -269,12 +269,19 @@ def test(request, test_type):
     form_class = TEST_FORMS.get(test_type)
     if form_class is None:
         raise NotFound()
-    questions = form_class().questions_data
+    form = form_class()
+    if not form.questions_data:
+        raise NotFound('В этом тесте пока нет вопросов.')
+    # Older clients submit only answers. Keep the revision served to that session.
+    revision_key = f'age_test_revision_{test_type}'
+    if request.session.get(revision_key) != form.revision:
+        request.session[revision_key] = form.revision
     return Response({
-        'passing_score': PASSING_SCORE,
+        'passing_score': form.passing_score,
+        'revision': form.revision,
         'questions': [
             {'id': question['id'], 'text': question['text'], 'options': question['options']}
-            for question in questions
+            for question in form.questions_data
         ],
     })
 
@@ -294,11 +301,15 @@ def test_results(request, test_type):
             raise NotFound('Для этого теста пока нет результата.')
         return Response(result_data(result))
 
-    answers = object_data(request).get('answers')
+    payload = object_data(request)
+    answers = payload.get('answers')
     if not isinstance(answers, dict):
         raise ValidationError({'answers': ['Укажите ответы на вопросы.']})
-    form = checked(form_class({f'question_{key}': value for key, value in answers.items()}))
-    score = form.check_answers(passing_score=PASSING_SCORE)
+    form = form_class({f'question_{key}': value for key, value in answers.items()})
+    revision = payload.get('revision', request.session.get(f'age_test_revision_{test_type}'))
+    if form.questions_data and revision != form.revision:
+        return Response({'detail': 'Тест изменился. Обновите страницу, чтобы открыть новую версию.'}, status=409)
+    score = checked(form).check_answers()
     result = TestResult.objects.create(
         user=request.user,
         test_type=test_type,
@@ -319,9 +330,9 @@ def certificate(request, test_type):
     if test_type not in TEST_FORMS:
         raise NotFound()
     result = selected_result(request, request.user.test_results.filter(test_type=test_type, passed=True))
-    if result is None or result.score < PASSING_SCORE:
+    if result is None or result.score < result.passing_score:
         raise NotFound('Сначала успешно сдайте тест.')
-    document_type = Certificate.DocumentType.DIPLOMA if result.score >= DIPLOMA_SCORE else Certificate.DocumentType.CERTIFICATE
+    document_type = Certificate.DocumentType.DIPLOMA if result.earns_diploma else Certificate.DocumentType.CERTIFICATE
     pdf = CertificateGenerator(request.user, test_type, document_type).generate()
     with transaction.atomic():
         certificate, _ = Certificate.objects.get_or_create(

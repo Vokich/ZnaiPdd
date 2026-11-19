@@ -41,32 +41,29 @@ def index(request):
   return render(request, 'index.html')
 
 
+def age_test_page(request, form_class, template, session_key, result_view):
+  form = form_class(request.POST if request.method == 'POST' else None)
+  if not form.questions_data:
+    return render(request, template, {'form': form, 'unavailable': True}, status=404)
+  if request.method == 'POST' and request.POST.get('revision') != form.revision:
+    return render(request, template, {'form': form_class(), 'updated': True}, status=409)
+  if form.is_valid():
+    score = form.check_answers()
+    result = TestResult.objects.create(
+      user=request.user, test_type=form.test_type, score=score['score'], total_questions=score['total'],
+      passing_score=score['passing_score'], passed=score['passed'],
+    )
+    request.session[session_key] = {
+      'score': result.score, 'total': result.total_questions, 'passing_score': result.passing_score,
+      'passed': result.passed, 'diploma_score': result.diploma_threshold(result.total_questions),
+    }
+    return redirect(result_view)
+  return render(request, template, {'form': form})
+
+
 @user_passes_test(is_child)
 def child(request):
-  if request.method == 'POST':
-    form = JuniorPddTestForm(request.POST)
-    if form.is_valid():
-      result = form.check_answers(passing_score=18)
-      TestResult.objects.create(
-        user=request.user,
-        test_type=TestResult.TestType.JUNIOR,
-        score=result['score'],
-        total_questions=result['total'],
-        passing_score=result['passing_score'],
-        passed=result['passed']
-      )
-      request.session['result_child'] = {
-        'score': result['score'],
-        'total': result['total'],
-        'passing_score': result['passing_score'],
-        'passed': result['passed']
-      }
-      return redirect('result_child')
-    else:
-      return render(request, 'child.html', {'form': form})
-  else:
-    form = JuniorPddTestForm()
-  return render(request, 'child.html', {'form': form})
+  return age_test_page(request, JuniorPddTestForm, 'child.html', 'result_child', 'result_child')
 
 
 @login_required
@@ -87,30 +84,7 @@ def test_result_child(request):
 
 @user_passes_test(is_child)
 def teen(request):
-  if request.method == 'POST':
-    form = TeenPddTestForm(request.POST)
-    if form.is_valid():
-      result = form.check_answers(passing_score=18)
-      TestResult.objects.create(
-        user=request.user,
-        test_type=TestResult.TestType.TEEN,
-        score=result['score'],
-        total_questions=result['total'],
-        passing_score=result['passing_score'],
-        passed=result['passed']
-      )
-      request.session['result_teen'] = {
-        'score': result['score'],
-        'total': result['total'],
-        'passing_score': result['passing_score'],
-        'passed': result['passed']
-      }
-      return redirect('result_teen')
-    else:
-      return render(request, 'teen.html', {'form': form})
-  else:
-    form = TeenPddTestForm()
-  return render(request, 'teen.html', {'form': form})
+  return age_test_page(request, TeenPddTestForm, 'teen.html', 'result_teen', 'result_teen')
 
 
 @login_required
@@ -133,30 +107,7 @@ def test_result_teen(request):
 
 @user_passes_test(is_child)
 def adults(request):
-  if request.method == 'POST':
-    form = AdultPddTestForm(request.POST)
-    if form.is_valid():
-      result = form.check_answers(passing_score=18)
-      TestResult.objects.create(
-        user=request.user,
-        test_type=TestResult.TestType.ADULT,
-        score=result['score'],
-        total_questions=result['total'],
-        passing_score=result['passing_score'],
-        passed=result['passed']
-      )
-      request.session['result_adults'] = {
-        'score': result['score'],
-        'total': result['total'],
-        'passing_score': result['passing_score'],
-        'passed': result['passed']
-      }
-      return redirect('result_adults')
-    else:
-      return render(request, 'adults.html', {'form': form})
-  else:
-    form = AdultPddTestForm()
-  return render(request, 'adults.html', {'form': form})
+  return age_test_page(request, AdultPddTestForm, 'adults.html', 'result_adults', 'result_adult')
 
 
 @login_required
@@ -272,11 +223,10 @@ def generate_certificate(request, test_type):
     messages.error(request, 'Сначала успешно сдайте тест!')
     return redirect('index')
 
-  score = test_result.score
-  if score >= 24:
+  if test_result.earns_diploma:
     document_type = 'diploma'
     document_name = 'Диплом'
-  elif score >= 18:
+  elif test_result.score >= test_result.passing_score:
     document_type = 'certificate'
     document_name = 'Сертификат'
   else:
