@@ -26,7 +26,7 @@ class EditorialAdmin(admin.ModelAdmin):
     has_change_permission = has_view_permission
 
     def has_delete_permission(self, request, obj=None):
-        return False
+        return request.user.is_superuser
 
     def changeform_view(self, request, object_id=None, form_url='', extra_context=None):
         if request.method == 'POST' and object_id and object_id.isascii() and object_id.isdecimal() and len(object_id) <= 18:
@@ -131,8 +131,6 @@ class PracticeVersionAdmin(EditorialAdmin):
     published_fields = (*common_fields, 'plate_a', 'plate_b', 'answer_data', 'published_at', 'withdrawn_at')
 
     def get_fieldsets(self, request, obj=None):
-        if obj and obj.published_at:
-            return [(None, {'fields': self.published_fields})]
         return [
             (None, {'fields': self.common_fields}),
             ('Изображения к заданию', {'fields': ('new_images',)}),
@@ -144,15 +142,13 @@ class PracticeVersionAdmin(EditorialAdmin):
         ]
 
     def get_readonly_fields(self, request, obj=None):
-        if obj and obj.published_at:
-            return self.published_fields
         return ('exercise',) if obj else ()
 
     def has_change_permission(self, request, obj=None):
-        return request.user.is_superuser and (obj is None or not obj.published_at)
+        return request.user.is_superuser
 
     def has_delete_permission(self, request, obj=None):
-        return bool(request.user.is_superuser and obj and not obj.published_at)
+        return request.user.is_superuser
 
     def view_on_site(self, obj):
         return f'/practice/{obj.exercise.slug}/?preview={obj.pk}'

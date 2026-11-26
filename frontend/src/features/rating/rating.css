@@ -70,3 +70,7 @@
   .rating-table thead th:first-child, .rating-table thead th:last-child { width: 16%; }
   .rating-table-title .text-link { font-size: .82rem; }
 }
+
+@media (max-width: 520px) {
+  .rating-table-title { flex-wrap: wrap; gap: 12px; }
+}

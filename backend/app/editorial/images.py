@@ -56,10 +56,10 @@ class PracticeImageInline(GalleryInline):
     model = PracticeImage
 
     def has_change_permission(self, request, obj=None):
-        return (obj is None or obj.published_at is None) and super().has_change_permission(request, obj)
+        return super().has_change_permission(request, obj)
 
     def has_add_permission(self, request, obj=None):
-        return (obj is None or obj.published_at is None) and super().has_add_permission(request, obj)
+        return super().has_add_permission(request, obj)
 
     def has_delete_permission(self, request, obj=None):
-        return (obj is None or obj.published_at is None) and super().has_delete_permission(request, obj)
+        return super().has_delete_permission(request, obj)

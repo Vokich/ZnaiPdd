@@ -77,8 +77,8 @@ class RouteResultAdmin(admin.ModelAdmin):
     ordering = ('-completed_at', '-pk')
     date_hierarchy = 'completed_at'
     list_per_page = 30
-    fields = ('participant', 'route_level', 'total_points', 'score', 'mistakes', 'completed_at', 'opened_rules')
-    readonly_fields = ('participant', 'route_level', 'total_points', 'completed_at', 'opened_rules')
+    fields = ('attempt', 'user', 'level', 'total', 'score', 'mistakes', 'completed_at', 'rule_reviews', 'opened_rules')
+    readonly_fields = ('completed_at', 'opened_rules')
 
     def get_queryset(self, request):
         return with_route_title(super().get_queryset(request), 'level')
@@ -90,13 +90,13 @@ class RouteResultAdmin(admin.ModelAdmin):
         return request.user.is_superuser
 
     def has_add_permission(self, request):
-        return False
+        return request.user.is_superuser
 
     def has_change_permission(self, request, obj=None):
         return request.user.is_superuser
 
     def has_delete_permission(self, request, obj=None):
-        return False
+        return request.user.is_superuser
 
     def save_model(self, request, obj, form, change):
         super().save_model(request, obj, form, change)

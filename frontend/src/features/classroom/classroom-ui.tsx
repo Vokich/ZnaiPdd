@@ -89,7 +89,7 @@ export function QuestionList({ questions, answers, change, disabled = false, rev
   questions: Question[]; answers: Answers; change?: (index: number, answer: number) => void; disabled?: boolean; review?: boolean
 }) {
   return <div className="class-questions">{questions.map((q, i) =>
-    <fieldset className="panel class-question" key={i} disabled={disabled || review}>
+    <div className="panel" key={i}><fieldset className="class-question" disabled={disabled || review}>
       <legend>{i + 1}. {q.text || 'Вопрос без текста'}</legend>
       {q.image && <img className="class-sign" src={q.image} alt={q.alt || 'Дорожный знак'} />}
       {q.options.map((option, j) => <label className="answer" key={j}>
@@ -98,5 +98,5 @@ export function QuestionList({ questions, answers, change, disabled = false, rev
       </label>)}
       {review && <p><strong>{answers[i] === q.correct ? 'Верно' : 'Верный ответ — ' + q.options[q.correct!]}</strong>
         {q.explanation && <>. {q.explanation}</>}</p>}
-    </fieldset>)}</div>
+    </fieldset></div>)}</div>
 }

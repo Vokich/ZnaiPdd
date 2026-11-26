@@ -3,8 +3,8 @@
 .class-list { grid-template-columns: repeat(auto-fit, minmax(min(100%, 20rem), 1fr)); }
 .class-panel { margin-block: 1rem; overflow-wrap: anywhere; }
 .class-panel h2 { margin-block: .2rem .8rem; }
-.class-question { min-width: 0; margin: 0; }
-.class-question legend { font-weight: 750; padding: 0 .35rem; max-width: 100%; overflow-wrap: anywhere; }
+.class-question { min-width: 0; margin: 0; padding: 0; border: 0; }
+.class-question legend { font-weight: 750; padding: 0; margin-bottom: 1rem; width: 100%; line-height: 1.45; max-width: 100%; overflow-wrap: anywhere; }
 .class-question .answer { margin-block: .5rem; overflow-wrap: anywhere; }
 .class-editor label { display: grid; gap: .35rem; }
 .class-editor input:not([type=radio]), .class-editor textarea, .class-editor select, .class-code-input {
@@ -23,3 +23,9 @@
 .class-stage .order-cards { max-width: 52rem; }
 .class-stage :focus-visible, .class-question :focus-visible { outline: 3px solid #59439a; outline-offset: 2px; }
 .class-join { max-width: 32rem; }
+
+.class-panel { display: flex; flex-direction: column; min-width: 0; }
+.class-panel .class-actions { margin-top: auto; padding-top: 1rem; }
+.class-editor { min-width: 0; text-align: left; }
+.class-editor input, .class-editor select, .class-editor textarea { min-width: 0; }
+.class-question .answer span { min-width: 0; line-height: 1.5; }

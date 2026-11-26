@@ -55,8 +55,9 @@
 .exercise-result { display: grid; grid-template-columns: clamp(51px, 8vw, 88px) minmax(0, 1fr); gap: 14px; align-items: start; }
 .exercise-result .mascot { align-self: center; }
 .practice-fragments { margin: 0; padding: 0; min-width: 0; border: 0; }
-.practice-fragments legend { margin-bottom: 8px; font-weight: 650; }
-.practice-fragments .answer { margin-bottom: 6px; border-color: #e2d8ec; background: #f7f3fc; }
+.practice-fragments legend { padding: 0; width: 100%; margin-bottom: 12px; font-weight: 650; }
+.practice-fragments .answer { margin: 0; border-color: #e2d8ec; background: #f7f3fc; }
+.practice-fragments .answer + .answer { margin-top: 8px; }
 .practice-fragments .answer:has(:checked) { border-color: var(--blue); background: var(--soft-lilac); }
 
 .news-grid { display: grid; gap: 16px; }
