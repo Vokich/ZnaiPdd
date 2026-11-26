@@ -15,7 +15,7 @@ class PlatformAttemptAdmin(admin.ModelAdmin):
     search_fields = ('title', 'task', 'user__username', 'user__profile__surname1', 'user__profile__name', 'organization')
     date_hierarchy = 'completed_at'
     fields = ('completed_at', 'kind', 'title', 'version', 'user', 'organization', 'score', 'total', 'task', 'source', 'answers', 'details')
-    readonly_fields = ('details',)
+    readonly_fields = ('source', 'details')
     list_per_page = 40
 
     def has_view_permission(self, request, obj=None):

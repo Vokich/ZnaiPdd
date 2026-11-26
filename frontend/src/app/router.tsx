@@ -35,6 +35,20 @@ function NotFoundPage() {
   return <div className="panel status-panel"><h1>Страница не найдена</h1><ButtonLink to="/">На главную →</ButtonLink></div>
 }
 
+function PageError() {
+  return <main className="portal" style={{ maxWidth: 720, marginInline: 'auto', paddingInline: 20 }}>
+    <section className="panel status-panel" role="alert">
+      <h1>Не удалось открыть страницу</h1>
+      <p>Проверь подключение к интернету и обнови страницу. Возможно, сайт был обновлён после открытия этой вкладки.</p>
+      <p>При обновлении несохранённые ответы могут потеряться.</p>
+      <div className="actions">
+        <button className="button" onClick={() => window.location.reload()}>Обновить страницу</button>
+        <a className="button button-light" href="/">На главную</a>
+      </div>
+    </section>
+  </main>
+}
+
 function Page({ pathname, portal, pending, main }: { pathname: string; portal: boolean; pending: boolean; main: RefObject<HTMLElement | null> }) {
   const transitioning = useViewTransitionState(pathname)
   // Keep the chosen entrance for this mount after the browser snapshot has gone away.
@@ -110,6 +124,7 @@ function lazyPage(load: () => Promise<ComponentType>, gate?: true | Role) {
 
 export const router = createBrowserRouter([{
   element: <App />,
+  errorElement: <PageError />,
   hydrateFallbackElement: <main className="portal"><Loading /></main>,
   children: [
     { path: '/', element: <HomePage /> },

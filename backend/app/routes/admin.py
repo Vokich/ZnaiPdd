@@ -70,6 +70,11 @@ class RouteLevelFilter(admin.SimpleListFilter):
 
 @admin.register(RouteResult)
 class RouteResultAdmin(admin.ModelAdmin):
+    def formfield_for_dbfield(self, db_field, request, **kwargs):
+        if db_field.name == 'rule_reviews':
+            kwargs['required'] = False
+        return super().formfield_for_dbfield(db_field, request, **kwargs)
+
     list_display = ('participant', 'route_level', 'points', 'mistakes', 'completed_at')
     list_select_related = ('user__profile',)
     list_filter = (RouteLevelFilter, 'completed_at')
@@ -99,6 +104,8 @@ class RouteResultAdmin(admin.ModelAdmin):
         return request.user.is_superuser
 
     def save_model(self, request, obj, form, change):
+        if obj.rule_reviews is None:
+            obj.rule_reviews = []
         super().save_model(request, obj, form, change)
         PlatformAttempt.objects.filter(source='route:' + obj.pk).update(score=obj.score, total=obj.total)
 
