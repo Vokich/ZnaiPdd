@@ -5,13 +5,10 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
 
 WORKDIR /app
 
-COPY requirements.txt requirements-prod.txt ./
-RUN python -m pip install --no-cache-dir --no-compile -c requirements.txt -r requirements-prod.txt
+COPY backend/requirements/ requirements/
+RUN python -m pip install --no-cache-dir --no-compile -c requirements/constraints.txt -r requirements/runtime.txt
 
-COPY manage.py .
-COPY pdd_site/ pdd_site/
-COPY app/ app/
-COPY templates/ templates/
+COPY backend/ ./
 
 RUN python manage.py collectstatic --noinput \
     && groupadd --gid 10001 django \
@@ -33,6 +30,10 @@ CMD ["npm", "run", "dev", "--", "--host", "0.0.0.0"]
 FROM frontend-dev AS frontend-build
 RUN npm run build
 
+FROM caddy:2.11-builder AS caddy-build
+RUN xcaddy build "$CADDY_VERSION" --with github.com/mholt/caddy-ratelimit@5625512f24f6f59d6f64fb3aafe5eecff0b286db
+
 FROM caddy:2.11-alpine AS frontend-prod
+COPY --from=caddy-build /usr/bin/caddy /usr/bin/caddy
 COPY Caddyfile /etc/caddy/Caddyfile
 COPY --from=frontend-build /frontend/dist/ /srv/frontend/

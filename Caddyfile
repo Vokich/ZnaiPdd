@@ -1,16 +1,57 @@
+{
+	servers {
+		timeouts {
+			read_header 10s
+			read_body 30s
+			idle 2m
+		}
+	}
+}
 {$DJANGO_DOMAIN:xn--80aiajlwq.xn--p1ai} {
+	log
 	encode zstd gzip
+	@api path /api/*
+	request_body @api {
+		max_size 1MB
+	}
+	request_body /admin/* {
+		max_size 20MB
+	}
+	rate_limit {
+		zone dynamic_total {
+			match {
+				path /api/* /admin/* /certificate/* /media/* /municipalities/search/ /download-training/
+			}
+			key platform
+			window 10s
+			events {$EDGE_TOTAL_PER_10S:2000}
+		}
+		zone dynamic_ip {
+			match {
+				path /api/* /admin/* /certificate/* /media/* /municipalities/search/ /download-training/
+			}
+			key {client_ip}
+			window 10s
+			events {$EDGE_IP_PER_10S:400}
+		}
+	}
 
 	handle /media/signs/* {
-		reverse_proxy web:8000
+		reverse_proxy web:8000 {
+			header_up X-Real-IP {client_ip}
+		}
 	}
 
 	handle /media/news/* {
-		reverse_proxy web:8000
+		reverse_proxy web:8000 {
+			header_up X-Real-IP {client_ip}
+		}
 	}
 
 	handle /media/practice/* {
-		reverse_proxy web:8000
+		reverse_proxy web:8000 {
+			header_up X-Real-IP {client_ip}
+		}
 	}
 
 	handle_path /media/* {
@@ -21,7 +62,9 @@
 
 	@django path /api /api/* /admin /admin/* /static/* /certificate/* /download-training/ /municipalities/search/
 	handle @django {
-		reverse_proxy web:8000
+		reverse_proxy web:8000 {
+			header_up X-Real-IP {client_ip}
+		}
 	}
 
 	handle /assets/* {

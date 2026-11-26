@@ -51,20 +51,20 @@ services:
     develop:
       watch:
         - action: sync
-          path: ./app
+          path: ./backend/app
           target: /app/app
           ignore: [__pycache__/]
         - action: sync
-          path: ./pdd_site
+          path: ./backend/pdd_site
           target: /app/pdd_site
           ignore: [__pycache__/]
         - action: sync
-          path: ./templates
+          path: ./backend/templates
           target: /app/templates
         - action: rebuild
-          path: ./requirements-prod.txt
+          path: ./backend/requirements
         - action: rebuild
-          path: ./requirements.txt
+          path: ./backend/manage.py
 
   classroom-cleanup-dev:
     <<: *backend
@@ -76,6 +76,7 @@ services:
     environment:
       POSTGRES_HOST: db-dev
       POSTGRES_PASSWORD: znaipdd-dev
+      PLATFORM_DETAIL_DAYS: ${PLATFORM_DETAIL_DAYS:-365}
       CLASSROOM_REVIEW_HOURS: ${CLASSROOM_REVIEW_HOURS:-24}
 
   frontend-dev:
@@ -122,11 +123,21 @@ services:
     profiles: [prod]
     restart: unless-stopped
     depends_on:
+      limits:
+        condition: service_healthy
       db:
         condition: service_healthy
     command: [sh, -ec, "python manage.py migrate --noinput && python manage.py bootstrap_admin && exec python -m uvicorn pdd_site.asgi:application --host 0.0.0.0 --port 8000 --no-proxy-headers"]
     environment:
       <<: *superuser-env
+      RATE_LOGIN_IP: ${RATE_LOGIN_IP:-180}
+      RATE_LOGIN_PAIR: ${RATE_LOGIN_PAIR:-10}
+      RATE_REGISTRATION: ${RATE_REGISTRATION:-150}
+      RATE_PDF: ${RATE_PDF:-12}
+      RATE_EXPORT: ${RATE_EXPORT:-3}
+      RATE_WRITES_USER: ${RATE_WRITES_USER:-120}
+      RATE_WRITES_GUEST: ${RATE_WRITES_GUEST:-1200}
+      RATE_QR_MISSES: ${RATE_QR_MISSES:-18}
       DJANGO_SETTINGS_MODULE: pdd_site.settings_prod
       DJANGO_DOMAIN: ${DJANGO_DOMAIN:-xn--80aiajlwq.xn--p1ai}
       DJANGO_SECRET_KEY: ${DJANGO_SECRET_KEY:-}
@@ -165,7 +176,19 @@ services:
     environment:
       POSTGRES_HOST: db
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-}
+      PLATFORM_DETAIL_DAYS: ${PLATFORM_DETAIL_DAYS:-365}
       CLASSROOM_REVIEW_HOURS: ${CLASSROOM_REVIEW_HOURS:-24}
+
+  limits:
+    image: redis:7-alpine
+    profiles: [prod]
+    restart: unless-stopped
+    command: [redis-server, --maxmemory, 64mb, --maxmemory-policy, allkeys-lru, --save, ""]
+    healthcheck:
+      test: [CMD, redis-cli, ping]
+      interval: 10s
+      timeout: 3s
+      retries: 5
 
   caddy:
     profiles: [prod]
@@ -174,6 +197,8 @@ services:
       target: frontend-prod
     restart: unless-stopped
     environment:
+      EDGE_IP_PER_10S: ${EDGE_IP_PER_10S:-400}
+      EDGE_TOTAL_PER_10S: ${EDGE_TOTAL_PER_10S:-2000}
       DJANGO_DOMAIN: ${DJANGO_DOMAIN:-xn--80aiajlwq.xn--p1ai}
     depends_on:
       web:

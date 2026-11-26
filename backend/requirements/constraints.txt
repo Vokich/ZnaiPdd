@@ -1,0 +1,8 @@
+asgiref==3.10.0
+charset-normalizer==3.4.4
+click==8.3.1
+colorama==0.4.6
+et-xmlfile==2.0.0
+h11==0.16.0
+sqlparse==0.5.3
+typing-extensions==4.16.0

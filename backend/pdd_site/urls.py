@@ -1,0 +1,43 @@
+from django.contrib import admin
+from django.urls import include, path, re_path
+from django.views.generic import RedirectView
+from app.legacy import views
+from django.conf import settings
+from django.conf.urls.static import static
+from app.signs.catalog import uploaded_sign_image
+from app.news.api import news_cover, news_photo
+from app.practice.api import practice_photo
+
+urlpatterns = [
+    path('api/', include('app.urls')),
+    path('admin/', admin.site.urls),
+    path('', views.index, name='index'),
+    path('age/child/', views.child, name='child'),
+    path('age/teen/', views.teen, name='teen'),
+    path('age/adults/', views.adults, name='adults'),
+    path('login/', views.user_login, name='login'),
+    path('logout/', views.logout_form, name='logout'),
+    path('reg/', views.reg, name='reg'),
+    path('municipalities/search/', views.municipality_search, name='municipality_search'),
+    path('test-result-child/', views.test_result_child, name='result_child'),
+    path('test-result-teen/', views.test_result_teen, name='result_teen'),
+    path('test-result-adult/', views.test_result_adult, name='result_adults'),
+    path('pdd-teacher/', views.pdd_teacher, name='pdd-teacher'),
+    path('certificate/<slug:test_type>/', RedirectView.as_view(pattern_name='api_certificate', query_string=True), name='generate_certificate'),
+    path('download-training/', RedirectView.as_view(pattern_name='api_training_material'), name='download_training'),
+    path('privacy-policy/', views.privacy_policy, name='privacy_policy'),
+    path('profile/', views.profile_view, name='profile'),
+    path('profile/edit/', views.profile_edit, name='profile_edit'),
+    path('profile/password/', views.profile_password_change, name='profile_password'),
+    path('signs/', views.signs_landing, name='signs_landing'),
+    path('signs/all/', views.signs_list, name='signs_list'),
+    path('signs/<slug:slug>/', views.sign_detail, name='sign_detail'),
+    path('signs/<slug:slug>/test/', views.sign_test, name='sign_test'),
+    re_path(r'^media/signs/(?P<name>.+)$', uploaded_sign_image, name='uploaded_sign_image'),
+    re_path(r'^media/news/gallery/(?P<name>.+)$', news_photo, name='news_photo'),
+    re_path(r'^media/news/(?P<name>.+)$', news_cover, name='news_cover'),
+    re_path(r'^media/practice/(?P<name>.+)$', practice_photo, name='practice_photo'),
+]
+
+if settings.DEBUG:
+    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
